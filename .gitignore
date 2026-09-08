@@ -1,0 +1,13 @@
+node_modules/
+dist/
+work/
+*.log
+.env
+.env.*
+!.env.example
+
+# Device-specific acceptance scripts; retained locally only.
+scripts/browser-qa.mjs
+scripts/final-check.mjs
+scripts/inspect-ui.cjs
+scripts/release-smoke.mjs

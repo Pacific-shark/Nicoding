@@ -1,0 +1,24 @@
+{
+  "name": "nicoding",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "A warm, interactive technical learning atlas with Nico the cat.",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1 --port 4173",
+    "build": "vite build",
+    "preview": "vite preview --host 127.0.0.1 --port 4173",
+    "validate:content": "node scripts/validate-content.mjs"
+  },
+  "dependencies": {
+    "lucide-react": "1.42.0",
+    "pyodide": "0.27.7",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "vite": "8.2.2"
+  },
+  "packageManager": "pnpm@11.19.0",
+  "engines": {
+    "node": ">=22.13.0"
+  }
+}

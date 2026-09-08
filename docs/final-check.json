@@ -1,0 +1,16 @@
+{
+  "checks": [
+    "SQLite browser lesson produces expected result using local wheel",
+    "SQLite from-import supported",
+    "OS reduced-motion preference respected",
+    "simplified semantic edges and legend",
+    "pet hides during editing and code remains executable",
+    "code draft preserved across learning steps",
+    "dialog keyboard dismissal",
+    "1280/1024/768/390/360 responsive widths without horizontal page overflow",
+    "no page errors or CDN requests"
+  ],
+  "errors": [],
+  "external": [],
+  "passed": true
+}
