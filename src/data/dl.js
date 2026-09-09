@@ -1,6 +1,6 @@
 import {lesson as L,question as Q} from './schema.js';
 export const dl = [
-L('dl-tensors','张量与广播','神经网络的第一张地图是 shape 表。',['math-vectors','ml-linear'],[
+L('dl-tensors','张量与广播','神经网络的第一张地图是 shape 表。',['math-vectors'],[
  ['张量让数据带上多个轴','标量是零维，向量一维，矩阵二维；图像批次可用 (N,C,H,W)。轴的顺序是约定，不能仅凭元素数量相同就随意 reshape。reshape 重新解释布局，transpose 交换轴。'],
  ['广播从末尾比较维度','维度相等或其中一个为 1 时可扩张。预测形状 (N,1) 与标签 (N,) 相减可能扩成 (N,N)，结果合法但不是逐样本误差。明确 squeeze/unsqueeze 的意图。']
 ],`pred = [[1], [2], [3]]
@@ -13,7 +13,7 @@ print(right)`,'wrong 是 3×3，right 是三个零。这里不用张量库也能
  Q('(N,1) 减 (N,) 在常见广播规则下可能得到？',['(N,N)','始终 (N,1)','必定报错'],0,['正确，末尾维度扩张形成两两差。','这需要标签也为 (N,1)。','规则允许这种广播。']),
  Q('reshape 与 transpose 的关系？',['完全相同','一个重解释形状，一个交换轴','都自动理解样本语义'],1,['两者操作不同。','正确，必须结合内存与轴含义理解。','库不知道业务语义。'])
 ],['torch'],'阅读一段 PyTorch forward，为每一层手写输入输出 shape。'),
-L('dl-backprop','自动微分与训练循环','把“模型训练”拆成五个看得见的动作。',['dl-tensors','math-grad','math-opt'],[
+L('dl-backprop','自动微分与训练循环','把“模型训练”拆成五个看得见的动作。',['dl-tensors','math-grad','math-opt','ml-splits'],[
  ['一次迭代的责任','准备批次 → forward 得到预测 → 算 loss → backward 得到梯度 → optimizer.step 更新参数。PyTorch 默认累积梯度，需要按策略 zero_grad；验证通常不需要构建求导图。'],
  ['训练模式与求导开关不同','model.eval() 切换 Dropout/BatchNorm 等模块的行为，no_grad() 关闭梯度记录；二者不互相替代。下面标量实现手动梯度，为真实 autograd 教程做准备。']
 ],`w = 0.0
@@ -61,7 +61,7 @@ for x in [1, 0, -1]:
  Q('RNN 在时间步之间共享什么？',['模型参数','每步所有输入必须相同','每步标签必须相同'],0,['正确，状态改变而参数复用。','输入通常不同。','标签不必相同。']),
  Q('LSTM 的门主要帮助？',['控制信息保留与流动','保证永不遗忘','自动获得监督标签'],0,['正确，为长程信息提供更可控路径。','没有这种绝对保证。','门不产生真实标签。'])
 ],['d2l'],'比较同一个短序列正序与倒序的状态，解释顺序如何进入计算。',{depth:'算法进阶'}),
-L('dl-attention','Attention 与 Transformer','让当前位置选择该看哪些信息。',['dl-tensors','math-info','dl-sequence'],[
+L('dl-attention','Attention 与 Transformer','让当前位置选择该看哪些信息。',['dl-tensors','math-info'],[
  ['把 Q、K、V 当作三个角色','Query 表示当前位置的查询；Key 用于匹配；Value 是被汇聚的信息。缩放点积注意力计算 softmax(QKᵀ/√d_k)V。权重是动态的，不是每次固定取邻居。'],
  ['一行一行算','先算每个 key 与 query 的分数；缩放后用 softmax 归一化；用这些权重加权 values。多头在不同投影空间重复此过程。位置编码补充次序信息，因果 mask 防止预测时看到未来。'],
  ['完整结构还有别的责任','Transformer 块通常包含注意力、前馈网络、残差和归一化。注意力图可以帮助观察，但不能直接当成模型决策的完整因果解释。']

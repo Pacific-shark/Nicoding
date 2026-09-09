@@ -1,6 +1,6 @@
 import {lesson as L,question as Q,challenge as C} from './schema.js';
 export const rl = [
-L('rl-bandits','多臂老虎机与探索','当你还不知道哪个选择更好。',['math-prob','math-stats'],[
+L('rl-bandits','多臂老虎机与探索','当你还不知道哪个选择更好。',['math-prob'],[
  ['探索和利用的冲突','选历史平均奖励最高的选项是在利用；尝试了解不确定选项是在探索。ε-greedy 以 ε 概率随机探索，否则选当前估计最优项。它与固定分流实验的目标不同。'],
  ['UCB 把不确定性放进分数','常见 UCB 分数是均值加上随观察次数下降的置信奖励。少试过的选项因此可能被选择。公式依赖假设与版本，生产场景还要处理非平稳、约束和反馈延迟。']
 ],`import math

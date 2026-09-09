@@ -1,7 +1,7 @@
 import {useEffect,useState} from 'react';
 import {byId,projects} from './data/index.js';
 export const KEY='nicoding.learning.v1';
-export const empty=()=>({version:1,lessons:{},notes:{},projects:{},drafts:{},settings:{pet:true,motion:true},last:'py-functions'});
+export const empty=()=>({version:1,lessons:{},notes:{},explanations:{},projects:{},drafts:{},settings:{pet:true,motion:true},last:'py-values'});
 export function validateImport(value) {
  if(!value||value.version!==1||typeof value.lessons!=='object'||!value.lessons||Array.isArray(value.lessons)) throw new Error('不是 Nicoding v1 进度文件。');
  const out=empty();
@@ -19,9 +19,13 @@ export function validateImport(value) {
    if(byId[id]&&typeof text==='string'&&text.length<=50000)out[section][id]=text;
   }
  }
+ for(const [id,record] of Object.entries(value.explanations||{})) {
+  if(!byId[id]||!record||typeof record!=='object')continue;
+  out.explanations[id]={text:typeof record.text==='string'?record.text.slice(0,20000):'',stretch:typeof record.stretch==='string'?record.stretch.slice(0,20000):'',checks:Array.isArray(record.checks)?[...new Set(record.checks.filter(i=>Number.isInteger(i)&&i>=0&&i<3))]:[]};
+ }
  for(const p of projects) if(value.projects?.[p.id]) {
   const input=value.projects[p.id];
-  out.projects[p.id]={steps:Array.isArray(input.steps)?input.steps.filter(i=>Number.isInteger(i)&&i>=0&&i<p.steps.length):[],note:typeof input.note==='string'?input.note.slice(0,20000):''};
+  out.projects[p.id]={steps:Array.isArray(input.steps)?input.steps.filter(i=>Number.isInteger(i)&&i>=0&&i<p.steps.length):[],note:typeof input.note==='string'?input.note.slice(0,20000):'',...(typeof input.code==='string'?{code:input.code.slice(0,50000)}:{})};
  }
  if(typeof value.settings?.pet==='boolean')out.settings.pet=value.settings.pet;
  if(typeof value.settings?.motion==='boolean')out.settings.motion=value.settings.motion;

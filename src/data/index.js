@@ -1,4 +1,5 @@
 import {domains} from './schema.js';
+import {miniProjects} from './mini-projects.js';
 import {python} from './python.js';
 import {web} from './web.js';
 import {engineering} from './engineering.js';
@@ -26,6 +27,7 @@ export const lessons = [...python,...web,...engineering,...math,...ml,...dl,...r
 export const byId = Object.assign(Object.create(null),Object.fromEntries(lessons.map(l=>[l.id,l])));
 export const byDomain = Object.fromEntries(domains.map(d=>[d.id,lessons.filter(l=>l.domain===d.id)]));
 export const projects = [
+ ...miniProjects,
  {id:'calculator',name:'从一条规则，到一个可靠功能',label:'01 / 代码与交付',intro:'做一个订单优惠计算器，让产品规则、输入校验和测试说同一件事。',skills:['py-functions','py-json','eng-tests','eng-contract'],deliver:'代码、规则说明、测试结果、启动说明',steps:['写清金额单位、折扣范围、舍入规则与异常返回','实现计算函数，覆盖零折扣、全额折扣和非法输入','接入 JSON 输入，分离解析、校验、计算与展示','让 AI 修改一个规则，读 diff 并运行回归测试','请一个不了解项目的人按说明运行，记录卡点'],accept:'输入 20000 分、10% 折扣得到 18000 分；非法折扣得到明确错误。重复计算不修改原订单。'},
  {id:'webapp',name:'一个能留下进度的小工具',label:'02 / 产品与 Web',intro:'用 React 做学习或任务看板，体验数据如何驱动界面。',skills:['web-react','web-http','web-typescript','eng-delivery'],deliver:'可运行页面、状态图、边界案例和演示记录',steps:['定义一个真实用户任务，画出状态与派生值','实现添加、修改、筛选与本地持久化','实现空状态、保存失败状态、键盘可达的控件','验证刷新恢复、移动端布局与非法导入','记录一次用户试用，并依据具体证据改一处交互'],accept:'刷新保留数据；坏格式导入不覆盖现有数据；所有主要操作可用键盘完成。'},
  {id:'mlproject',name:'一个经得起追问的预测实验',label:'03 / 数据与机器学习',intro:'用公开或合成数据预测一个业务结果，重点解释评估为何可信。',skills:['ml-problem','ml-splits','ml-metrics','ml-trees'],deliver:'数据字典、可复现实验、指标表与限制说明',steps:['定义样本粒度、预测时点与标签窗口','按部署场景划分训练、验证和测试，检查泄漏','建立均值/众数基线，再比较线性与树模型','报告阈值下的错误代价和分群表现','保留失败结果，说明哪些结论不能从当前数据推出'],accept:'同一切分下比较；所有预处理只在训练集拟合；最终测试不用于调参。'},
