@@ -1,4 +1,5 @@
 import React,{useCallback,useEffect,useRef,useState} from 'react';
+import {createPortal} from 'react-dom';
 import {ArrowRight,ArrowLeft,Check,ChevronRight,ChevronDown,X,Search,Settings2,Play,RotateCcw,Plus,Minus,Focus,ExternalLink,BookOpen,Braces,Globe,Blocks,Sigma,ChartNoAxesCombined,Network,Route,Sparkles,Clock,Lightbulb,CheckCircle2,FileText,Download,Upload,VolumeX,PawPrint,Move,PanelRightClose,Menu,Code2,NotebookPen,LockKeyhole,Command,Target,RefreshCw,CircleHelp,Maximize2,Minimize2,Bookmark,Info,Sun,Terminal,ChevronUp,Save,StopCircle,MousePointer2} from 'lucide-react';
 const icons={ArrowRight,ArrowLeft,Check,ChevronRight,ChevronDown,X,Search,Settings2,Play,RotateCcw,Plus,Minus,Focus,ExternalLink,BookOpen,Braces,Globe,Blocks,Sigma,ChartNoAxesCombined,Network,Route,Sparkles,Clock,Lightbulb,CheckCircle2,FileText,Download,Upload,VolumeX,PawPrint,Move,PanelRightClose,Menu,Code2,NotebookPen,LockKeyhole,Command,Target,RefreshCw,CircleHelp,Maximize2,Minimize2,Bookmark,Info,Sun,Terminal,ChevronUp,Save,StopCircle,MousePointer2};
 export function Icon({name,size=18,...props}){const Component=icons[name]||BookOpen;return <Component size={size} strokeWidth={1.6} aria-hidden="true" {...props}/>;}
@@ -27,6 +28,9 @@ export function useDialogFocus(ref,active,onClose) {
   const el=ref.current,previous=document.activeElement,overflow=document.body.style.overflow;
   if(!el)return;
   document.body.style.overflow='hidden';
+  // Leave elements already suspended by their own component under that component's control.
+  const background=[...document.body.children].filter(node=>node instanceof HTMLElement&&!node.contains(el)&&!node.inert).map(node=>[node,node.inert]);
+  background.forEach(([node])=>{node.inert=true;});
   const frame=requestAnimationFrame(()=>{
    const first=el.querySelector('input:not([type="file"]):not([type="checkbox"]),textarea')||el.querySelector('button')||el;
    first.focus({preventScroll:true});
@@ -42,7 +46,7 @@ export function useDialogFocus(ref,active,onClose) {
    else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}
   };
   document.addEventListener('keydown',handler,true);
-  return()=>{cancelAnimationFrame(frame);document.body.style.overflow=overflow;document.removeEventListener('keydown',handler,true);if(previous?.isConnected)previous.focus({preventScroll:true});};
+  return()=>{cancelAnimationFrame(frame);document.body.style.overflow=overflow;background.forEach(([node,inert])=>{node.inert=inert;});document.removeEventListener('keydown',handler,true);if(previous?.isConnected)previous.focus({preventScroll:true});};
  },[active,ref]);
 }
 export function Modal({title,onClose,children,wide=false}) {
@@ -57,7 +61,7 @@ export function Modal({title,onClose,children,wide=false}) {
  },[]);
  useEffect(()=>()=>clearTimeout(timer.current),[]);
  useDialogFocus(ref,true,requestClose);
- return <div className={'modal-backdrop'+(closing?' is-closing':'')} onPointerDown={e=>{if(e.target===e.currentTarget)requestClose();}}><section ref={ref} role="dialog" aria-modal="true" aria-label={title} tabIndex={-1} className={'modal '+(wide?'wide':'')}><div className="modal-heading"><h2>{title}</h2><IconButton name="X" label="关闭窗口" onClick={requestClose}/></div>{children}</section></div>;
+ return createPortal(<div className={'modal-backdrop'+(closing?' is-closing':'')} onPointerDown={e=>{if(e.target===e.currentTarget)requestClose();}}><section ref={ref} role="dialog" aria-modal="true" aria-label={title} tabIndex={-1} className={'modal '+(wide?'wide':'')}><div className="modal-heading"><h2>{title}</h2><IconButton name="X" label="关闭窗口" onClick={requestClose}/></div>{children}</section></div>,document.body);
 }
 export const statusOf=(record)=>record?.completed?(record.due<=Date.now()?'due':'done'):record?.visited?'started':'new';
 export const statusLabel={new:'未开始',started:'学习中',done:'已点亮',due:'待复习'};

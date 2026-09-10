@@ -4,4 +4,5 @@ import App from './App.jsx';
 import './styles.css';
 import './interaction.css';
 import './roadmap.css';
+import './clarity.css';
 createRoot(document.getElementById('root')).render(<App/>);
