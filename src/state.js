@@ -25,7 +25,7 @@ export function validateImport(value) {
  }
  for(const p of projects) if(value.projects?.[p.id]) {
   const input=value.projects[p.id];
-  out.projects[p.id]={steps:Array.isArray(input.steps)?input.steps.filter(i=>Number.isInteger(i)&&i>=0&&i<p.steps.length):[],note:typeof input.note==='string'?input.note.slice(0,20000):'',...(typeof input.code==='string'?{code:input.code.slice(0,50000)}:{})};
+  out.projects[p.id]={steps:Array.isArray(input.steps)?[...new Set(input.steps.filter(i=>Number.isInteger(i)&&i>=0&&i<p.steps.length))]:[],note:typeof input.note==='string'?input.note.slice(0,20000):'',...(typeof input.code==='string'?{code:input.code.slice(0,50000)}:{}),...(Number.isInteger(input.activeTask)&&input.activeTask>=0&&input.activeTask<p.steps.length?{activeTask:input.activeTask}:{})};
  }
  if(typeof value.settings?.pet==='boolean')out.settings.pet=value.settings.pet;
  if(typeof value.settings?.motion==='boolean')out.settings.motion=value.settings.motion;

@@ -1,12 +1,9 @@
 import React from 'react';
-import {projects,domains,byId} from '../data/index.js';
+import {projects} from '../data/index.js';
 import {Icon} from './ui.jsx';
 
 export default function ProjectLibrary({state}) {
- return <main className="collection-page project-library"><header className="collection-title"><h1>实践项目</h1><p>选一个学过的主题，写代码、跑检查，再记录自己的结论。</p></header>
-  {[['mini','小项目','在浏览器里完成核心逻辑，适合学完一个方向后练习。'],['full','综合项目','在自己的开发环境中实现，包含需求、测试和交付。']].map(([tier,title,description])=><section className="project-library-group" key={tier}><header className="library-heading"><div><h2>{title}</h2><p>{description}</p></div><span>{projects.filter(p=>(p.tier==='mini')===(tier==='mini')).length} 个项目</span></header><div className="project-library-list">{projects.filter(p=>(p.tier==='mini')===(tier==='mini')).map((p,i)=>{
-   const domain=domains.find(d=>d.id===byId[p.skills[0]].domain),done=state.projects[p.id]?.steps?.length||0;
-   return <a key={p.id} className="project-library-row" href={`#projects/${p.id}`}><span className="project-number">{String(i+1).padStart(2,'0')}</span><span className="project-library-copy"><h3>{p.name}</h3><p>{domain.name}{p.tier==='mini'?` · ${p.minutes}`:' · 本地实践'}</p></span><span className="project-library-status">{done?`${done} / ${p.steps.length} 项已记录`:'未开始'}</span><Icon name="ArrowRight" size={18}/></a>;
-  })}</div></section>)}
- </main>;
+ const started=projects.filter(p=>{const saved=state.projects[p.id];return saved&&(saved.code||saved.note||saved.steps?.length);});
+ const choices=started.length?started.slice(0,3):['mini-cart','mini-tasks','mini-retriever'].map(id=>projects.find(p=>p.id===id));
+ return <section className="studio-welcome" aria-label="选择实践项目"><div className="studio-welcome-inner"><div className="studio-welcome-icon"><Icon name="Code2" size={25}/></div><h1>选一个项目，开始动手。</h1><p>把需求拆成任务，在同一个工作区里写代码、看结果。</p><h2>{started.length?'接着上次的项目':'可以从这里开始'}</h2><div className="studio-resume-list">{choices.map(p=><a href={`#projects/${p.id}`} key={p.id}><Icon name={p.tier==='mini'?'FileCode2':'Folder'} size={21}/><span><strong>{p.name}</strong><small>{p.label} · {started.length?`${state.projects[p.id].steps?.length||0} / ${p.steps.length} 项已记录`:p.minutes}</small></span><Icon name="ArrowRight" size={18}/></a>)}</div><p className="studio-welcome-footnote">小项目可直接在浏览器运行。综合项目保留任务和记录，在自己的开发环境中完成。</p></div></section>;
 }

@@ -4,14 +4,14 @@ import {Icon} from './ui.jsx';
 import {placements,paths} from '../data/paths.js';
 import {byId} from '../data/index.js';
 const positions=['0% 0%','50% 0%','100% 0%','0% 100%','50% 100%','100% 100%'];
-export default function NicoCompanion({motion,celebration,resetKey,lesson,completed,onLearn,onTeach,onProject,suspended=false}) {
+export default function NicoCompanion({motion,celebration,resetKey,lesson,completed,onLearn,onTeach,onProject,suspended=false,workspace=false}) {
  const [viewport,setViewport]=useState(()=>({width:innerWidth,height:innerHeight}));
  const size=viewport.width<700?78:125;
  const initial=()=>({x:Math.max(8,innerWidth-(innerWidth<700?88:143)),y:Math.max(90,innerHeight-(innerWidth<700?168:190))});
  const [pos,setPos]=useState(initial),[pose,setPose]=useState(0),[bubble,setBubble]=useState(''),[menu,setMenu]=useState(false),[sleep,setSleep]=useState(false),[walking,setWalking]=useState(false),[minimized,setMinimized]=useState(false),[hint,setHint]=useState(-1);
  const [duration,setDuration]=useState(25),[remaining,setRemaining]=useState(25*60),[deadline,setDeadline]=useState(null);
  const drag=useRef(),timer=useRef(),last=useRef(Date.now()),petButton=useRef(),panel=useRef(),root=useRef();
- const clamp=p=>({x:Math.max(6,Math.min(viewport.width-size-6,p.x)),y:Math.max(80,Math.min(viewport.height-size-(viewport.width<700?75:35),p.y))});
+ const clamp=p=>({x:Math.max(6,Math.min(viewport.width-size-6,p.x)),y:Math.max(80,Math.min(viewport.height-size-(workspace&&viewport.width<=760?160:viewport.width<700?75:35),p.y))});
  const panelWidth=Math.min(290,viewport.width-24),bottomSpace=viewport.width<700?74:15;
  const above=pos.y-96,below=viewport.height-bottomSpace-pos.y-size-12,placeAbove=above>=below;
  const panelHeight=Math.min(610,Math.max(120,placeAbove?above:below));
@@ -21,7 +21,7 @@ export default function NicoCompanion({motion,celebration,resetKey,lesson,comple
  function action(fn){setMenu(false);setBubble('');fn();}
  useEffect(()=>{setPos(initial());setMinimized(false);},[resetKey]);
  useEffect(()=>{const resize=()=>setViewport({width:innerWidth,height:innerHeight});window.addEventListener('resize',resize);return()=>window.removeEventListener('resize',resize);},[]);
- useEffect(()=>{setPos(p=>clamp(p));},[viewport.width,viewport.height]);
+ useEffect(()=>{setPos(p=>clamp(p));},[viewport.width,viewport.height,workspace,resetKey]);
  useEffect(()=>{setHint(-1);setMenu(false);},[lesson.id]);
  useEffect(()=>{if(suspended)setMenu(false);},[suspended]);
  useEffect(()=>{

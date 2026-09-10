@@ -5,4 +5,5 @@ import './styles.css';
 import './interaction.css';
 import './roadmap.css';
 import './clarity.css';
+import './project-studio.css';
 createRoot(document.getElementById('root')).render(<App/>);
