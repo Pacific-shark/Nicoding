@@ -38,7 +38,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
       - name: Validate lessons and exercises
-        run: pnpm validate:content
+        run: |
+          pnpm validate:content
+          pnpm validate:learning
       - name: Configure Pages
         id: pages
         uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0

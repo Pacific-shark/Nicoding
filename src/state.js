@@ -1,7 +1,8 @@
 import {useEffect,useState} from 'react';
 import {byId,projects} from './data/index.js';
+import {sanitizeUnits} from './learning/progress.js';
 export const KEY='nicoding.learning.v1';
-export const empty=()=>({version:1,lessons:{},notes:{},explanations:{},projects:{},drafts:{},settings:{pet:true,motion:true},last:'py-values'});
+export const empty=()=>({version:1,units:{},lessons:{},notes:{},explanations:{},projects:{},drafts:{},settings:{pet:true,motion:true},last:'py-values'});
 export function validateImport(value) {
  if(!value||value.version!==1||typeof value.lessons!=='object'||!value.lessons||Array.isArray(value.lessons)) throw new Error('不是 Nicoding v1 进度文件。');
  const out=empty();
@@ -29,6 +30,7 @@ export function validateImport(value) {
  }
  if(typeof value.settings?.pet==='boolean')out.settings.pet=value.settings.pet;
  if(typeof value.settings?.motion==='boolean')out.settings.motion=value.settings.motion;
+ out.units=sanitizeUnits(value.units);
  if(byId[value.last])out.last=value.last;
  return out;
 }

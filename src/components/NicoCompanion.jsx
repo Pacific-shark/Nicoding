@@ -4,12 +4,13 @@ import {Icon} from './ui.jsx';
 import {placements,paths} from '../data/paths.js';
 import {byId} from '../data/index.js';
 const positions=['0% 0%','50% 0%','100% 0%','0% 100%','50% 100%','100% 100%'];
-export default function NicoCompanion({motion,celebration,resetKey,lesson,completed,onLearn,onTeach,onProject,suspended=false,workspace=false}) {
+export default function NicoCompanion({motion,celebration,resetKey,lesson,completed,onLearn,onTeach,onProject,suspended=false,workspace=false,study=false}) {
  const [viewport,setViewport]=useState(()=>({width:innerWidth,height:innerHeight}));
  const size=viewport.width<700?78:125;
  const initial=()=>({x:Math.max(8,innerWidth-(innerWidth<700?88:143)),y:Math.max(90,innerHeight-(innerWidth<700?168:190))});
  const [pos,setPos]=useState(initial),[pose,setPose]=useState(0),[bubble,setBubble]=useState(''),[menu,setMenu]=useState(false),[sleep,setSleep]=useState(false),[walking,setWalking]=useState(false),[minimized,setMinimized]=useState(false),[hint,setHint]=useState(-1);
  const [duration,setDuration]=useState(25),[remaining,setRemaining]=useState(25*60),[deadline,setDeadline]=useState(null);
+ const studyReturn=useRef(null);
  const drag=useRef(),timer=useRef(),last=useRef(Date.now()),petButton=useRef(),panel=useRef(),root=useRef();
  const clamp=p=>({x:Math.max(6,Math.min(viewport.width-size-6,p.x)),y:Math.max(80,Math.min(viewport.height-size-(workspace&&viewport.width<=760?160:viewport.width<700?75:35),p.y))});
  const panelWidth=Math.min(290,viewport.width-24),bottomSpace=viewport.width<700?74:15;
@@ -23,6 +24,17 @@ export default function NicoCompanion({motion,celebration,resetKey,lesson,comple
  useEffect(()=>{const resize=()=>setViewport({width:innerWidth,height:innerHeight});window.addEventListener('resize',resize);return()=>window.removeEventListener('resize',resize);},[]);
  useEffect(()=>{setPos(p=>clamp(p));},[viewport.width,viewport.height,workspace,resetKey]);
  useEffect(()=>{setHint(-1);setMenu(false);},[lesson.id]);
+ useEffect(()=>{
+  if(study){
+   if(!studyReturn.current)studyReturn.current={pos,minimized};
+   const mobile=viewport.width<=720;
+   const compact=mobile||viewport.height<820;
+   setPos(mobile?initial():{x:Math.max(26,(viewport.width-1536)/2+40),y:Math.max(80,viewport.height-(compact?145:290))});
+   setMinimized(compact);setMenu(false);
+  }else if(studyReturn.current){
+   setPos(clamp(studyReturn.current.pos));setMinimized(studyReturn.current.minimized);studyReturn.current=null;
+  }
+ },[study,viewport.width,viewport.height,resetKey]);
  useEffect(()=>{if(suspended)setMenu(false);},[suspended]);
  useEffect(()=>{
   if(!menu)return;
@@ -48,7 +60,7 @@ export default function NicoCompanion({motion,celebration,resetKey,lesson,comple
  function walk(){setMenu(false);setSleep(false);setPose(5);setWalking(true);setPos(p=>clamp({x:p.x+(p.x>viewport.width/2?-90:90),y:p.y}));clearTimeout(timer.current);timer.current=setTimeout(()=>{setWalking(false);setPose(0);},1300);}
  const next=placements[lesson.id].next,hints=lesson.challenge?.hints||lesson.pitfalls;
  const time=`${String(Math.floor(remaining/60)).padStart(2,'0')}:${String(remaining%60).padStart(2,'0')}`;
- return createPortal(<div ref={root} className="nico-layer" inert={suspended||undefined}>
+ return createPortal(<div ref={root} className={`nico-layer ${study?'nico-study':''}`} inert={suspended||undefined}>
   <div className={`pet nico-companion ${walking?'walking':''} ${motion?'pet-motion':''} ${minimized?'is-minimized':''}`} style={{left:pos.x,top:pos.y,width:minimized?78:size}}>
    {bubble&&!menu&&!minimized&&<div className="pet-bubble" role="status">{bubble}</div>}
    {minimized?<button className="nico-dock" aria-label="展开 Nico 学习助手" onClick={()=>setMinimized(false)}><Icon name="PawPrint" size={17}/><span>{deadline?time:'Nico'}</span></button>:<><button ref={petButton} className="pet-body" aria-label="Nico 小猫，打开学习助手或拖动移动" aria-expanded={menu} aria-controls="nico-panel" title="点击打开学习助手；拖动或方向键移动" onPointerDown={pointerDown} onPointerMove={pointerMove} onPointerUp={pointerUp} onPointerCancel={()=>{drag.current=null;setPose(0);}} onKeyDown={e=>{if(e.key.startsWith('Arrow')){e.preventDefault();setMenu(false);setPos(p=>clamp({x:p.x+(e.key==='ArrowRight'?20:e.key==='ArrowLeft'?-20:0),y:p.y+(e.key==='ArrowDown'?20:e.key==='ArrowUp'?-20:0)}));}}} onClick={e=>{if(e.detail===0){setMenu(v=>!v);setBubble('');}}}><span className={`pet-sprite pose-${pose}`} style={{backgroundPosition:positions[pose]}}/></button><span className="pet-tag"><Icon name={deadline?'Clock':'Move'} size={10}/>{deadline?time:sleep?'Nico 正在打盹':'点我一起学'}</span><button className="nico-minimize" aria-label="将 Nico 收起到小标签" onClick={()=>{setMenu(false);setMinimized(true);}}><Icon name="Minus" size={12}/></button></>}

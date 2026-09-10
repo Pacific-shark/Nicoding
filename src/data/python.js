@@ -66,7 +66,7 @@ print(len({order["user"] for order in orders}))`,'nico 总额 50，milo 总额 1
 
 print(unique_count(["nico", "nico", "milo"]))`,`def unique_count(users):
     return len(set(users))`,['assert unique_count(["a","a","b"]) == 2','assert unique_count([]) == 0','assert unique_count(["a"]) == 1'],['重复值应该只算一次。','集合 set 可以去掉重复值。'])}),
-L('py-references','引用与默认参数',"分清重新赋值、原地修改和浅复制。",['py-containers'],[
+L('py-references','引用、复制与共享状态',"看清一个改动，为什么会影响另一个变量。",['py-containers','py-functions'],[
  ["两个变量可以指向同一个列表", "看这两组操作的差别：\n```python\na = [1]\nb = a\nb.append(2)\nprint(a)  # [1, 2]\n\nb = [9]\nprint(a)  # 仍是 [1, 2]\n```\n`b = a` 没有复制列表，两个名字指向同一个对象。`append` 改的是这个对象，所以通过 a、b 都能看到变化。`b = [9]` 新建了另一个列表并让 b 指向它，a 的指向不变。\n\n判断一行代码会影响谁，先看它改的是变量的指向，还是已有对象里的内容。"],
  ["浅复制在哪一层独立", "`copy()` 会创建新的外层列表，但其中的元素仍可能指向原来的对象：\n```python\na = [[1]]\nb = a.copy()\nb[0].append(2)\nprint(a)  # [[1, 2]]\n```\n这时 `a is b` 为假，外层不同；`a[0] is b[0]` 为真，里面那一个列表仍共享。相反，`b[0] = [7]` 是替换 b 的一个元素，不会把 a 的对应元素换掉。\n\n`deepcopy` 会递归复制适用的内部对象，但不必见到嵌套数据就全部深复制。先找出实际要改的那一层，再决定需要怎样隔离。"],
  ["默认列表为什么会越积越多", "下面的默认列表在执行函数定义时创建，而不是每次调用都创建：\n```python\ndef collect(x, bag=[]):\n    bag.append(x)\n    return bag\n\nprint(collect(\"A\"))  # ['A']\nprint(collect(\"B\"))  # ['A', 'B']\n```\n两次都省略了 bag，于是用到同一个默认对象。改成 `bag=None`，在函数体中用 `if bag is None: bag = []`，每次省略参数时才新建列表。\n\n这里不能随手改成 `if not bag`：调用者显式传入的空列表也是假值，会被替换掉，而练习约定要在传入的原列表上追加。"]
