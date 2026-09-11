@@ -8,4 +8,6 @@ import './clarity.css';
 import './project-studio.css';
 import './learning/unit.css';
 import './journeys/journeys.css';
+import './story/story.css';
+import './story/nico.css';
 createRoot(document.getElementById('root')).render(<App/>);
