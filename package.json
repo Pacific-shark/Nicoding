@@ -9,7 +9,8 @@
     "build": "vite build",
     "preview": "vite preview --host 127.0.0.1 --port 4173",
     "validate:content": "node scripts/validate-content.mjs",
-    "validate:learning": "node scripts/validate-learning.mjs"
+    "validate:learning": "node scripts/validate-learning.mjs",
+    "validate:journeys": "node scripts/validate-journeys.mjs"
   },
   "dependencies": {
     "lucide-react": "1.42.0",

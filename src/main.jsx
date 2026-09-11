@@ -7,4 +7,5 @@ import './roadmap.css';
 import './clarity.css';
 import './project-studio.css';
 import './learning/unit.css';
+import './journeys/journeys.css';
 createRoot(document.getElementById('root')).render(<App/>);
