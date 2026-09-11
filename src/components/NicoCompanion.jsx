@@ -28,7 +28,7 @@ export default function NicoCompanion({motion,celebration,resetKey,lesson,comple
   if(study){
    if(!studyReturn.current)studyReturn.current={pos,minimized};
    const mobile=viewport.width<=720;
-   const compact=true;
+   const compact=mobile||viewport.height<820;
    setPos(mobile?initial():{x:Math.max(26,(viewport.width-1536)/2+40),y:Math.max(80,viewport.height-(compact?145:290))});
    setMinimized(compact);setMenu(false);
   }else if(studyReturn.current){
