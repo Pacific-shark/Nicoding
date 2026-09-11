@@ -1,39 +1,14 @@
-.nico-character{display:block;width:100%;height:auto;overflow:visible;isolation:isolate}
-.nico-character .nico-rig{transform-origin:130px 185px}
-.nico-character .nico-tail{transform-origin:93px 165px}
-.nico-character .nico-head{transform-origin:142px 126px;transition:transform .45s ease}
-.nico-character .nico-torso{transform-origin:139px 184px;transition:transform .45s ease}
-.nico-character .nico-ear-left{transform-origin:108px 62px}.nico-character .nico-ear-right{transform-origin:178px 65px}
-.nico-character .nico-front-left{transform-origin:133px 143px}.nico-character .nico-front-right{transform-origin:163px 143px}
-.nico-character .nico-back-paw{transform-origin:101px 167px}.nico-character .nico-hind-paw{transform-origin:181px 166px}
-.nico-character .nico-open-eyes{transform-origin:142px 92px;transition:opacity .1s}
-.nico-character .nico-closed-eyes,.nico-character .nico-snooze{opacity:0;transition:opacity .15s}
-.nico-alive .nico-tail{animation:nico-tail-swish 4.8s ease-in-out infinite}
-.nico-alive .nico-head{animation:nico-head-rest 5.3s ease-in-out infinite}
-.nico-alive .nico-torso{animation:nico-breath 4.2s ease-in-out infinite}
-.nico-alive .nico-ear-right{animation:nico-ear-twitch 9s ease-in-out infinite}
-.nico-alive .nico-open-eyes{animation:nico-eyelids 5.1s infinite}
-.nico-pose-1 .nico-open-eyes,.nico-pose-3 .nico-open-eyes,.nico-pose-4 .nico-open-eyes{opacity:0;animation:none}
-.nico-pose-1 .nico-closed-eyes,.nico-pose-3 .nico-closed-eyes,.nico-pose-4 .nico-closed-eyes{opacity:1}
-.nico-pose-2 .nico-front-right,.nico-pose-3 .nico-front-right{transform:rotate(-78deg);transition:transform .4s ease}
-.nico-pose-3.nico-alive .nico-rig{animation:nico-bounce .6s ease-in-out 2}
-.nico-pose-4 .nico-head{animation:none;transform:translate(0,14px) rotate(12deg)}
-.nico-pose-4 .nico-torso{transform:scaleY(.91)}.nico-pose-4 .nico-snooze{opacity:1}
-.nico-pose-5.nico-alive .nico-front-left,.nico-pose-5.nico-alive .nico-hind-paw{animation:nico-leg-step .38s ease-in-out infinite}
-.nico-pose-5.nico-alive .nico-front-right,.nico-pose-5.nico-alive .nico-back-paw{animation:nico-leg-step .38s ease-in-out -.19s infinite}
-.nico-pose-5.nico-alive .nico-rig{animation:nico-walk-bob .19s ease-in-out infinite alternate}
-.nico-companion.pet{mix-blend-mode:normal}.nico-companion .pet-body{aspect-ratio:240/210;border-radius:0;overflow:visible}
+.nico-character{display:block;width:100%;aspect-ratio:1;overflow:visible;mix-blend-mode:multiply}
+.nico-art{display:block;width:100%;height:100%;background-size:300% 200%;background-repeat:no-repeat;transform-origin:50% 88%;clip-path:none;mask:none}
+.nico-alive .nico-art{animation:nico-restored-breathe 5.5s ease-in-out infinite}
+.nico-pose-4.nico-alive .nico-art{animation-duration:8s}
+.nico-pose-5.nico-alive .nico-art{animation:nico-restored-step .23s ease-in-out infinite}
+.nico-companion.pet{mix-blend-mode:normal}.nico-companion .pet-body{aspect-ratio:1;border-radius:0;overflow:visible}
 .nico-companion .pet-tag{margin:4px auto 0;color:#786756;background:#fffaf3;border-color:#d6c9b9}
 .nico-companion .pet-body:focus-visible{outline:2px solid #d88753;outline-offset:6px;border-radius:20px}
 .nico-companion .pet-bubble{left:0;right:auto;transform:none;min-width:170px;width:190px;font:12px/1.8 var(--sans)}
 .nico-study .nico-companion.is-minimized{top:auto!important;bottom:62px!important;left:auto!important;right:12px!important}
-@keyframes nico-tail-swish{0%,100%{transform:rotate(-5deg)}50%{transform:rotate(10deg)}}
-@keyframes nico-head-rest{0%,100%{transform:rotate(-1deg)}50%{transform:translateY(-1px) rotate(2deg)}}
-@keyframes nico-breath{0%,100%{transform:scaleY(1)}50%{transform:scaleY(1.025)}}
-@keyframes nico-ear-twitch{0%,84%,92%,100%{transform:rotate(0)}88%,96%{transform:rotate(8deg)}}
-@keyframes nico-eyelids{0%,92%,98%,100%{transform:scaleY(1)}95%{transform:scaleY(.08)}}
-@keyframes nico-leg-step{0%,100%{transform:rotate(-12deg)}50%{transform:rotate(12deg)}}
-@keyframes nico-walk-bob{from{transform:translateY(0)}to{transform:translateY(-2px)}}
-@keyframes nico-bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+@keyframes nico-restored-breathe{0%,100%{transform:scaleY(1)}50%{transform:scaleY(1.018)}}
+@keyframes nico-restored-step{0%,100%{transform:translateY(0) rotate(-1deg)}50%{transform:translateY(-3px) rotate(1deg)}}
 @media(prefers-reduced-motion:reduce){.nico-character *{animation:none!important;transition:none!important}}
 html[data-motion=off] .nico-character *{animation:none!important;transition:none!important}
