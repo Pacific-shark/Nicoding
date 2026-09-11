@@ -1,7 +1,7 @@
 import {journeys} from '../journeys/catalog.js';
 
 export const chapterOrder=['py','web','eng','math','ml','dl','llm','rl'];
-export const acts=[{title:'让小店正常运转',ids:['py','web','eng']},{title:'让决策有依据',ids:['math','ml','dl']},{title:'让助手接过工作',ids:['llm','rl']}];
+export const acts=[{title:'开张那几天',ids:['py','web','eng']},{title:'客人多起来了',ids:['math','ml','dl']},{title:'找个帮手',ids:['llm','rl']}];
 // Dependencies express needed skills, not a forced order for unrelated subjects.
 export const chapters={
  py:{name:'第一笔订单',subject:'Python',icon:'Braces',color:'#db784c',soft:'#fff0e4',requires:[],next:['web','eng','math'],sender:'运营同事',scene:'开张第一天，账就对不上了。',opening:'运营把第一批订单交给你。金额是一串文字，优惠标签还串回了原订单。先找到出错的那一步，再决定怎么改。',message:'九折金额帮我核一下。另外，为什么原订单也多了“已优惠”？',deliver:'一份金额正确、单位明确、原始标签未被修改的订单结果。',ending:'订单脚本有了输入校验、执行记录和复制边界。现在，小店需要一个用户能操作的页面。',beats:[
