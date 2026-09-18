@@ -1,10 +1,10 @@
-import React,{memo,useEffect,useId,useMemo,useRef,useState} from 'react';
-import {chapterById} from './catalog.js';
+import React,{useEffect,useId,useMemo,useRef,useState} from 'react';
+import {chapters,chapterById} from './catalog.js';
 import {knowledgeById,shortTitle} from './knowledge.js';
-import {CAMERA_DISTANCE,LOCAL_RADIUS,PLANETS,canRotate,connection,dragCamera,globeLines,orbit,placeLabels,project,projectedPath,rotate} from './space-geometry.js';
-
-const grid=globeLines(),miniatureGrid=globeLines(1),orbits=[140,235,305,355].map(r=>orbit(r));
-const tint=(hex,factor)=>'#'+hex.slice(1).match(/../g).map(v=>Math.round(factor>=0?parseInt(v,16)+(255-parseInt(v,16))*factor:parseInt(v,16)*(1+factor)).toString(16).padStart(2,'0')).join('');
+import {canRotate,clamp,dragCamera,placeLabels,project} from './space-geometry.js';
+import {CLUSTERS,globalPoints,compactClusters,compactGlobalPoints} from './knowledge-layout.js';
+import {personality} from './knowledge-personality.js';
+import KnowledgeCat from './KnowledgeCat.jsx';
 function useSize(ref) {
  const [size,setSize]=useState({width:800,height:620});
  useEffect(()=>{const observer=new ResizeObserver(([entry])=>{const {width,height}=entry.contentRect;if(width&&height)setSize({width,height});});observer.observe(ref.current);return()=>observer.disconnect();},[ref]);return size;
@@ -26,41 +26,65 @@ function useDrag(camera,onChange) {
   onKeyDown:e=>{if(e.target!==e.currentTarget)return;const delta={ArrowLeft:[-35,0],ArrowRight:[35,0],ArrowUp:[0,-35],ArrowDown:[0,35]}[e.key];if(delta){e.preventDefault();onChange(dragCamera(camera,...delta));}},
  }};
 }
-export function PlanetSurface({color,radius,camera,id}) {
- const paths=useMemo(()=>miniatureGrid.map(line=>{let path='',started=false;for(const point of line){const p=rotate(point,camera);if(p.z<0){started=false;continue;}path+=(started?'L':'M')+(p.x*radius).toFixed(2)+','+(p.y*radius).toFixed(2)+' ';started=true;}return path;}),[radius,camera]);
- return <g pointerEvents="none"><defs><radialGradient id={id} cx="28%" cy="22%" r="82%"><stop offset="0" stopColor={tint(color,.69)}/><stop offset=".36" stopColor={tint(color,.27)}/><stop offset=".72" stopColor={color}/><stop offset="1" stopColor={tint(color,-.47)}/></radialGradient></defs><circle r={radius} fill={'url(#'+id+')'}/>{paths.map((d,i)=><path key={i} d={d} fill="none" stroke="#fff" strokeOpacity=".35" strokeWidth=".7"/>)}<circle r={radius} fill="none" stroke={tint(color,-.25)} strokeOpacity=".28" strokeWidth=".8"/></g>;
-}
-function NodeLabel({node,placement,active}) {
- const p=placement||{x:node.x-65,y:node.y+node.radius+9,width:130};
- return <g className={'space-label '+(!placement?'space-label-collapsed':'')} pointerEvents={placement?'auto':'none'}><rect x={p.x} y={p.y} width={p.width} height="24" rx="5" fill="var(--atlas-bg)" fillOpacity={active?.98:.88}/><text x={p.x+p.width/2} y={p.y+16} textAnchor="middle">{node.label}</text></g>;
-}
-function depthPaths(points,camera,width,height,scale,frontLimit) {
- let front='',back='',previous=null;
- for(const point of points){const p=project(point,camera,width,height,scale),near=p.z>=frontLimit,position=p.x.toFixed(2)+','+p.y.toFixed(2);const command=previous?.near===near?'L':'M';
-  if(near)front+=command+position+' ';else back+=command+position+' ';previous={near};
- }
- return {front,back};
-}
+
 function activate(e,fn){if(e.key==='Enter'||e.key===' '){e.preventDefault();e.stopPropagation();fn();}}
-const GlobalScene=memo(function GlobalScene({camera,size,domain,onSelect,onEnter}) {
- const prefix=useId().replace(/:/g,''),{width,height}=size,scale=Math.min(width/920,height/740)*camera.zoom;
- const nodes=PLANETS.map(n=>{const p=project(n,camera,width,height,scale);return {...n,...p,radius:n.radius*p.scale,label:chapterById[n.id].name};}).sort((a,b)=>a.z-b.z);
- const labels=placeLabels(nodes,width,height,width<500?12:14,domain);
- return <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} className="space-svg space-global" aria-label="全局领域星系" role="group"><g className="space-orbits" pointerEvents="none">{orbits.map((points,i)=><path key={i} d={projectedPath(points,camera,width,height,scale)} strokeDasharray={i===0?'3 6':undefined}/>)}</g>{nodes.map(n=>{const active=domain===n.id;return <g key={n.id} className={'space-target space-planet '+(active?'selected':'')} data-space-target={n.id} data-depth={n.z.toFixed(3)} role="button" tabIndex={0} aria-label={n.label+'星球'} aria-pressed={active} onClick={()=>onSelect(n.id)} onDoubleClick={()=>onEnter(n.id)} onKeyDown={e=>activate(e,()=>onSelect(n.id))}><title>{n.label} · 双击进入局部星图</title><circle className="space-hit" cx={n.x} cy={n.y} r={Math.max(n.radius+7,19)}/>{active&&<ellipse className="planet-selection" cx={n.x} cy={n.y} rx={n.radius+10} ry={n.radius+10}/>}<g transform={`translate(${n.x} ${n.y})`}><PlanetSurface color={chapterById[n.id].color} radius={n.radius} camera={camera} id={prefix+'-'+n.id}/></g><NodeLabel node={n} placement={labels[n.id]} active={active}/></g>;})}</svg>;
-});
-function LocalScene({camera,size,points,selected,onSelect,progress,domain}) {
- const prefix=useId().replace(/:/g,''),{width,height}=size,scale=Math.min((width-52)/620,(height-48)/560)*camera.zoom;
- const radius=LOCAL_RADIUS*CAMERA_DISTANCE/Math.sqrt(CAMERA_DISTANCE**2-LOCAL_RADIUS**2)*scale;
- const nodes=points.map(p=>({...p,...project(p,camera,width,height,scale),radius:8,label:shortTitle(knowledgeById[p.id])})).sort((a,b)=>a.z-b.z);
- const labels=placeLabels(nodes,width,height,width<500?12:15,selected),frontLimit=LOCAL_RADIUS**2/CAMERA_DISTANCE;
- const pointById=useMemo(()=>Object.fromEntries(points.map(p=>[p.id,p])),[points]);
- const edges=useMemo(()=>points.flatMap(p=>knowledgeById[p.id].prereqs.filter(k=>pointById[k]&&(p.id===selected||k===selected)).map(k=>({id:k+'-'+p.id,points:connection(pointById[k],p)}))),[points,pointById,selected]);
- return <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} className="space-svg space-local" aria-label={chapterById[domain].name+'知识星球'} role="group"><defs><radialGradient id={prefix+'-body'} cx="33%" cy="25%" r="76%"><stop offset="0" stopColor="#fffefb" stopOpacity=".12"/><stop offset=".6" stopColor={tint(chapterById[domain].color,.83)} stopOpacity=".22"/><stop offset="1" stopColor={tint(chapterById[domain].color,.55)} stopOpacity=".35"/></radialGradient><radialGradient id={prefix+'-node'} cx="30%" cy="20%" r="85%"><stop stopColor="#d9dce0"/><stop offset=".4" stopColor="#717d87"/><stop offset="1" stopColor="#39424c"/></radialGradient><radialGradient id={prefix+'-active'} cx="30%" cy="20%" r="85%"><stop stopColor="#ffe3be"/><stop offset=".4" stopColor="#c87d56"/><stop offset="1" stopColor="#974a2e"/></radialGradient><marker id={prefix+'-arrow'} viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0L8 4L0 8" fill="#b86645"/></marker></defs>
-  <circle className="space-globe-body" cx={width/2} cy={height/2} r={radius} fill={'url(#'+prefix+'-body)'} pointerEvents="none"/><g className="space-grid" pointerEvents="none">{grid.map((line,i)=>{const paths=depthPaths(line,camera,width,height,scale,frontLimit);return <g key={i}><path className="rear" d={paths.back}/><path d={paths.front}/></g>;})}</g><g className="space-connections" pointerEvents="none">{edges.map(edge=>{const paths=depthPaths(edge.points.slice(2,-2),camera,width,height,scale,frontLimit),end=project(edge.points.at(-3),camera,width,height,scale),marker='url(#'+prefix+'-arrow)';return <g key={edge.id} data-prerequisite={edge.id}><path className="rear" d={paths.back} markerEnd={end.z<frontLimit?marker:undefined}/><path d={paths.front} markerEnd={end.z>=frontLimit?marker:undefined}/></g>;})}</g>
-  {nodes.map(n=>{const k=knowledgeById[n.id],active=n.id===selected,completed=!!progress.state.lessons[n.id]?.completed,back=n.z<frontLimit;return <g key={n.id} data-space-target={n.id} data-depth={n.z.toFixed(3)} className={'space-target space-knowledge '+(active?'selected ':'')+(back?'rear ':'')+(completed?'completed':'')} role="button" tabIndex={0} aria-label={k.title+(back?'，位于背面':'')+(completed?'，已完成检查':'')} aria-pressed={active} onClick={()=>onSelect(n.id)} onDoubleClick={()=>{location.hash='knowledge/'+n.id;}} onKeyDown={e=>activate(e,()=>onSelect(n.id))}><title>{k.title}{back?' · 转动星球可查看正面':''}</title><circle className="space-hit" cx={n.x} cy={n.y} r="18"/>{active&&<circle className="knowledge-selection" cx={n.x} cy={n.y} r="15"/>}<circle className="knowledge-dot" cx={n.x} cy={n.y} r={(active?9:6.5)*Math.max(.78,Math.min(1.12,n.scale/scale))} fill={'url(#'+prefix+(active?'-active':'-node')+')'}/>{completed&&<path className="knowledge-check" d={`M${n.x-3},${n.y}l2,2 4,-4`}/>}<NodeLabel node={n} placement={labels[n.id]} active={active}/></g>;})}
- </svg>;
+function relationPath(a,b){
+ const dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy);
+ if(d<a.radius+b.radius+10)return null;
+ const ax=a.x+dx/d*(a.radius+5),ay=a.y+dy/d*(a.radius+5),bx=b.x-dx/d*(b.radius+6),by=b.y-dy/d*(b.radius+6);
+ return 'M'+ax.toFixed(2)+','+ay.toFixed(2)+' L'+bx.toFixed(2)+','+by.toFixed(2);
 }
-export default function KnowledgeSpace({mode,domain,camera,onCamera,points,selected,onSelect,onDomain,onEnter,progress}) {
- const viewport=useRef(null),size=useSize(viewport),{dragging,handlers}=useDrag(camera,onCamera);
- return <div className={'knowledge-space '+(dragging?'is-dragging':'')} ref={viewport} tabIndex={0} role="group" aria-label="空间画布：空白处按住左键拖动，方向键也可转动视角" data-yaw={camera.yaw.toFixed(5)} data-pitch={camera.pitch.toFixed(5)} {...handlers}>{mode==='global'?<GlobalScene camera={camera} size={size} domain={domain} onSelect={onDomain} onEnter={onEnter}/>:<LocalScene camera={camera} size={size} domain={domain} points={points} selected={selected} onSelect={onSelect} progress={progress}/>}</div>;
+function CatLabel({node,placement,active,selected}){
+ const labelWidth=Math.max(80,[...node.label].length*13+14),p=placement||{x:clamp(node.x-labelWidth/2,7,node.canvasWidth-labelWidth-7),y:clamp(node.y+node.radius+6,5,node.canvasHeight-30),width:labelWidth};
+ return <g className={'cat-label '+(!placement?'cat-label-reveal':'')} pointerEvents={placement?'auto':'none'}>
+  <rect x={p.x} y={p.y} width={p.width} height="24" rx="4" fill="var(--atlas-bg)" fillOpacity={active||selected?1:.94}/>
+  <text x={p.x+p.width/2} y={p.y+16} textAnchor="middle">{node.label}</text>
+ </g>;
+}
+export default function KnowledgeSpace({mode,domain,camera,onCamera,points,selected,onSelect,progress}){
+ const viewport=useRef(null),size=useSize(viewport),{dragging,handlers}=useDrag(camera,onCamera),prefix=useId().replace(/:/g,'');
+ const [hovered,setHovered]=useState(null),[focused,setFocused]=useState(null);
+ const {width,height}=size,global=mode==='global',compact=width<520,world=global?(compact?compactGlobalPoints:globalPoints):points;
+ const renderCamera=camera.focusId?{...camera,target:world.find(p=>p.id===camera.focusId)||camera.target}:camera;
+ const clusters=compact?compactClusters:CLUSTERS;
+ const extentX=global?(compact?335:550):Math.max(...world.map(p=>Math.abs(p.x)),250)+80;
+ const extentY=global?(compact?620:450):Math.max(...world.map(p=>Math.abs(p.y)),190)+65;
+ const scale=Math.min((width-36)/(extentX*2),(height-32)/(extentY*2))*camera.zoom;
+ const selectedKnowledge=knowledgeById[selected];
+ const related=useMemo(()=>new Set([...selectedKnowledge.prereqs,...world.filter(p=>knowledgeById[p.id].prereqs.includes(selected)).map(p=>p.id)]),[selected,selectedKnowledge,world]);
+ const projected=world.map(p=>{
+  const projection=project(p,renderCamera,width,height,scale),active=p.id===selected;
+  const baseRadius=global?(compact?8:14*Math.min(1,scale/camera.zoom/.77)):(compact?15:23);
+  const radius=clamp(baseRadius*(projection.scale/scale)*Math.sqrt(camera.zoom),global?7:(compact?13:18),global?24:31);
+  return {...p,...projection,radius,label:shortTitle(knowledgeById[p.id]),canvasWidth:width,canvasHeight:height,priority:active?4:related.has(p.id)?3:p.domain===domain?2:0};
+ }).sort((a,b)=>a.z-b.z);
+ const byId=Object.fromEntries(projected.map(p=>[p.id,p]));
+ const headings=global?chapters.map(c=>({...c,...project({...clusters[c.id],y:clusters[c.id].y-135},renderCamera,width,height,scale)})):[];
+ const reserved=headings.map(p=>({x:p.x-60,y:p.y-17,w:120,h:26}));
+ const labels=placeLabels(projected,width,height,compact?(global?9:12):(global?11:13),selected,reserved);
+ const foreground=hovered||focused||selected;
+ const ordered=[...projected.filter(p=>p.id!==foreground),...projected.filter(p=>p.id===foreground)];
+ return <div className={'knowledge-space '+(global?'is-global ':'')+(dragging?'is-dragging':'')} ref={viewport} tabIndex={0} role="group" aria-label="知识星图画布：空白处按住左键拖动，方向键也可转动视角" data-yaw={camera.yaw.toFixed(5)} data-pitch={camera.pitch.toFixed(5)} {...handlers}>
+  <svg width={width} height={height} viewBox={'0 0 '+width+' '+height} className={'space-svg cat-constellation '+(global?'cat-global':'cat-local')} aria-label={global?'全局知识点星图':chapterById[domain].name+'知识关系图'} role="group">
+   <defs><marker id={prefix+'-arrow'} viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0L8 4L0 8" fill="#b86645"/></marker></defs>
+   <g className="cat-relations" pointerEvents="none">{projected.flatMap(n=>knowledgeById[n.id].prereqs.filter(p=>byId[p]).map(p=>{
+    const a=byId[p],active=n.id===selected||p===selected;
+    if(global&&a.domain!==n.domain&&!active)return null;
+    const d=relationPath(a,n);return d?<path key={p+'-'+n.id} data-prerequisite={p+'-'+n.id} className={active?'selected':''} d={d} markerEnd={active?'url(#'+prefix+'-arrow)':undefined}/>:null;
+   }))}</g>
+   {global&&<g className="cat-cluster-labels" pointerEvents="none">{headings.map(p=><text key={p.id} x={p.x} y={p.y} textAnchor="middle" fill={p.color}>{p.name}</text>)}</g>}
+   {ordered.map(n=>{
+    const k=knowledgeById[n.id],active=n.id===selected,p=personality(n.id),completed=!!progress.state.lessons[n.id]?.completed,relevant=related.has(n.id);
+    const catColor=active?'#a65333':chapterById[n.domain].color;
+    return <g key={n.id} data-space-target={n.id} data-difficulty={p.id} data-depth={n.z.toFixed(3)} className={'space-target cat-node '+(active?'selected ':'')+(relevant?'related ':'')+(global&&n.domain!==domain&&!relevant?'muted ':'')+(completed?'completed':'')} style={{color:catColor,'--cat-fill':active?'#fff1dd':'#fffdf9'}} role="button" tabIndex={0} aria-label={k.title+'，'+p.label+'，'+p.expression+'表情'+(completed?'，已完成检查':'')} aria-pressed={active} onClick={()=>onSelect(n.id)} onDoubleClick={()=>{location.hash='knowledge/'+n.id;}} onKeyDown={e=>activate(e,()=>onSelect(n.id))} onPointerEnter={()=>setHovered(n.id)} onPointerLeave={()=>setHovered(null)} onFocus={()=>setFocused(n.id)} onBlur={()=>setFocused(null)}>
+     <title>{k.title+' · '+p.label+' · '+p.expression+'表情'}</title>
+     <circle className="space-hit" cx={n.x} cy={n.y} r={Math.max(n.radius+3,global?12:18)}/>
+     {active&&<circle className="cat-selected-ring" cx={n.x} cy={n.y} r={n.radius+7}/>}
+     <g transform={'translate('+n.x+' '+n.y+') scale('+(n.radius/22)+')'} pointerEvents="none"><KnowledgeCat pose={p.pose} level={p.level}/></g>
+     {completed&&<g className="cat-completion" transform={'translate('+(n.x+n.radius-1)+' '+(n.y+n.radius-1)+')'} pointerEvents="none"><circle r="5"/><path d="M-2 0l1.5 1.5L3-2"/></g>}
+     <CatLabel node={n} placement={labels[n.id]} active={n.id===foreground} selected={active}/>
+    </g>;
+   })}
+  </svg>
+ </div>;
 }
