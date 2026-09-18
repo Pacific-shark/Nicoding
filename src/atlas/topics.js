@@ -1,0 +1,10 @@
+import {coreTopics} from './topics-core.js';
+import {mlTopics} from './topics-ml.js';
+import {dlTopics} from './topics-dl.js';
+import {aiTopics} from './topics-ai.js';
+export const topics=[...coreTopics,...mlTopics,...dlTopics,...aiTopics];
+export const topicById=Object.assign(Object.create(null),Object.fromEntries(topics.map(t=>[t.id,t])));
+export const topicsFor=id=>topics.filter(t=>t.knowledge.includes(id)||t.stages.some(s=>s.knowledge.includes(id)));
+export const topicHref=(id,index)=>`#topic/${id}${index===undefined?'':'/'+index}`;
+export const stageKey=(topic,index)=>`${topic.id}:${index}`;
+export const reportedStages=(topic,state)=>topic.stages.filter((s,i)=>s.checks.every((_,j)=>state.studies?.[topic.id]?.stages?.[i]?.checks?.includes(j))&&(state.studies?.[topic.id]?.stages?.[i]?.note?.trim().length||0)>=20).length;

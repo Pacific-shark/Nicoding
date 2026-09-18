@@ -13,7 +13,8 @@
     "validate:journeys": "node scripts/validate-journeys.mjs",
     "validate:story": "node scripts/validate-story.mjs",
     "validate:courses": "node scripts/validate-courses.mjs",
-    "validate:bank": "python scripts/validate-bank.py"
+    "validate:bank": "python scripts/validate-bank.py",
+    "validate:atlas": "node scripts/validate-atlas.mjs"
   },
   "dependencies": {
     "lucide-react": "1.42.0",

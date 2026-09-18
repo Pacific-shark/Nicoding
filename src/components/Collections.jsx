@@ -1,5 +1,6 @@
 import React,{useState} from 'react';
-import {lessons,domains} from '../data/index.js';
+import {domains} from '../data/index.js';
+import {knowledge as lessons} from '../atlas/knowledge.js';
 import {Icon,Modal} from './ui.jsx';
 import {Quiz} from './Lesson.jsx';
 import ProjectStudio from './ProjectStudio.jsx';

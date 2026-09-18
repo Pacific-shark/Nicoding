@@ -1,0 +1,114 @@
+{
+  "handson": {
+    "repo": "ageron/handson-ml3",
+    "sha": "e707c2d659abafb9b1f9fd927907619a128db8d7",
+    "license": "Apache-2.0",
+    "reviewed": "2026-09-18",
+    "files": [
+      "02_end_to_end_machine_learning_project.ipynb",
+      "03_classification.ipynb",
+      "05_support_vector_machines.ipynb",
+      "07_ensemble_learning_and_random_forests.ipynb",
+      "08_dimensionality_reduction.ipynb",
+      "09_unsupervised_learning.ipynb"
+    ]
+  },
+  "micrograd": {
+    "repo": "karpathy/micrograd",
+    "sha": "7bc720e951fe422b8f8814aa5aa1b64121d26b4c",
+    "license": "MIT",
+    "reviewed": "2026-09-18",
+    "files": [
+      "micrograd/engine.py",
+      "micrograd/nn.py",
+      "test/test_engine.py"
+    ]
+  },
+  "torch": {
+    "repo": "pytorch/tutorials",
+    "sha": "65e2e1a1c1520a6ccb1adc7fb2a55ce78ccdc598",
+    "license": "BSD-3-Clause",
+    "reviewed": "2026-09-18",
+    "files": [
+      "beginner_source/dcgan_faces_tutorial.py",
+      "beginner_source/transfer_learning_tutorial.py",
+      "intermediate_source/seq2seq_translation_tutorial.py",
+      "beginner_source/basics/optimization_tutorial.py"
+    ]
+  },
+  "llms": {
+    "repo": "rasbt/LLMs-from-scratch",
+    "sha": "ace7c08802b5ad7cfbb1738d8f29f2a0b548d875",
+    "license": "Apache-2.0（许可证对书籍及相关图片另有排除）",
+    "reviewed": "2026-09-18",
+    "files": [
+      "ch03/01_main-chapter-code/ch03.ipynb",
+      "ch04/01_main-chapter-code/ch04.ipynb",
+      "ch05/01_main-chapter-code/gpt_train.py",
+      "ch07/01_main-chapter-code/ch07.ipynb"
+    ]
+  },
+  "cleanrl": {
+    "repo": "vwxyzjn/cleanrl",
+    "sha": "fe8d8a03c41a7ef5b523e2e354bd01c363e786bb",
+    "license": "MIT；部分文件附第三方许可",
+    "reviewed": "2026-09-18",
+    "files": [
+      "cleanrl/dqn.py",
+      "cleanrl/ppo.py",
+      "cleanrl/sac_continuous_action.py"
+    ]
+  },
+  "flask": {
+    "repo": "pallets/flask",
+    "sha": "d73fa1cdcbd8b1465c151db8924ba58b1dd14e35",
+    "license": "BSD-3-Clause",
+    "reviewed": "2026-09-18",
+    "files": [
+      "examples/tutorial/flaskr/blog.py",
+      "examples/tutorial/flaskr/db.py",
+      "examples/tutorial/tests/test_blog.py"
+    ]
+  },
+  "fullstack": {
+    "repo": "fastapi/full-stack-fastapi-template",
+    "sha": "cb740b656d7a0a6c5e12c7bf8e50343ec94ee9c7",
+    "license": "MIT",
+    "reviewed": "2026-09-18",
+    "files": [
+      "backend/app/models.py",
+      "backend/app/api/routes/items.py",
+      "frontend/src/routes/_layout/items.tsx"
+    ]
+  },
+  "sklearn": {
+    "repo": "scikit-learn/scikit-learn",
+    "sha": "914346f574cddd99904513dec5a5d655b954dc91",
+    "license": "BSD-3-Clause",
+    "reviewed": "2026-09-18",
+    "files": [
+      "examples/cluster/plot_dbscan.py",
+      "examples/inspection/plot_permutation_importance.py"
+    ]
+  },
+  "rag": {
+    "repo": "langchain-ai/rag-from-scratch",
+    "sha": "1fdb7d0e4f1d3e731c8397332452715512f18667",
+    "license": null,
+    "reviewed": "2026-09-18",
+    "files": [
+      "rag_from_scratch_1_to_4.ipynb"
+    ]
+  },
+  "mcp": {
+    "repo": "modelcontextprotocol/python-sdk",
+    "sha": "6affe5c0d3588fd1705713b3703dc68015cfe3eb",
+    "license": "MIT",
+    "reviewed": "2026-09-18",
+    "files": [
+      "examples/servers/simple-tool/mcp_simple_tool/__init__.py",
+      "examples/servers/simple-tool/mcp_simple_tool/__main__.py",
+      "examples/servers/simple-tool/mcp_simple_tool/server.py"
+    ]
+  }
+}

@@ -1,10 +1,12 @@
 import {useEffect,useState} from 'react';
-import {byId,projects} from './data/index.js';
+import {projects} from './data/index.js';
+import {knowledgeById as byId} from './atlas/knowledge.js';
+import {sanitizeStudies} from './atlas/records.js';
 import {sanitizeJourneys} from './journeys/records.js';
 import {sanitizeUnits} from './learning/progress.js';
 import {sanitizeCourses} from './courses/bank/records.js';
 export const KEY='nicoding.learning.v1';
-export const empty=()=>({version:1,courses:{},journeys:{},units:{},lessons:{},notes:{},explanations:{},projects:{},drafts:{},settings:{pet:true,motion:true},last:'py-values'});
+export const empty=()=>({version:1,studies:{},courses:{},journeys:{},units:{},lessons:{},notes:{},explanations:{},projects:{},drafts:{},settings:{pet:true,motion:true},last:'py-values'});
 export function validateImport(value) {
  if(!value||value.version!==1||typeof value.lessons!=='object'||!value.lessons||Array.isArray(value.lessons)) throw new Error('不是 Nicoding v1 进度文件。');
  const out=empty();
@@ -33,6 +35,8 @@ export function validateImport(value) {
  if(typeof value.settings?.pet==='boolean')out.settings.pet=value.settings.pet;
  if(typeof value.settings?.motion==='boolean')out.settings.motion=value.settings.motion;
  out.units=sanitizeUnits(value.units);
+ out.studies=sanitizeStudies(value.studies);
+ out.lastTopic=Object.hasOwn(out.studies,value.lastTopic)?value.lastTopic:null;
  out.courses=sanitizeCourses(value.courses);
  out.lastCourse=out.courses[value.lastCourse]?value.lastCourse:null;
  out.journeys=sanitizeJourneys(value.journeys);

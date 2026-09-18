@@ -13,7 +13,7 @@ root=Path(__file__).resolve().parents[1]
 source=Path(sys.argv[1])
 characters=set(chr(i) for i in range(32,127))
 for file in (root/'src').rglob('*'):
-    if file.suffix in {'.js','.jsx','.css'}:
+    if file.suffix in {'.js','.jsx','.css','.json'}:
         characters.update(file.read_text(encoding='utf-8'))
 characters.update((root/'index.html').read_text(encoding='utf-8'))
 font=TTFont(source,recalcTimestamp=False)

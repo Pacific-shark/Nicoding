@@ -1,0 +1,47 @@
+import React,{useEffect,useMemo,useRef,useState} from 'react';
+import {Icon} from '../components/ui.jsx';
+import {chapters,chapterById} from './catalog.js';
+import {knowledge,knowledgeById,shortTitle} from './knowledge.js';
+import {topicsFor,topicHref} from './topics.js';
+import {AtlasShell,KnowledgeLink} from './AtlasShell.jsx';
+const representatives={
+ py:['py-values','py-functions','py-containers','py-references','py-errors','py-json'],
+ web:['web-types','web-scope','web-async','web-dom','web-http','web-react'],
+ eng:['eng-contract','eng-git','eng-debug','eng-tests','eng-sql','eng-delivery'],
+ math:['math-vectors','math-prob','math-grad','math-opt','math-stats','math-info'],
+ ml:['ml-problem','ml-splits','ml-linear','ml-metrics','ml-trees','ml-unsupervised'],
+ dl:['dl-tensors','dl-autograd','dl-backprop','dl-cnn','dl-attention','dl-transformer'],
+ llm:['llm-tokens','llm-context','llm-tools','llm-rag','llm-agent','llm-eval'],
+ rl:['rl-bandits','rl-mdp','rl-q','rl-dqn','rl-ppo','rl-sac'],
+};
+const clusterCenters={py:[175,180],web:[475,180],eng:[775,180],math:[175,405],ml:[475,405],rl:[175,635],dl:[475,635],llm:[775,635]};
+const offsets=[[-15,-61],[-97,-11],[76,-13],[-70,56],[50,69],[104,37]];
+function positions(filter,selected,compact){
+ if(filter==='all'){
+  const entries=chapters.flatMap(c=>representatives[c.id].map((id,i)=>({id,x:clusterCenters[c.id][0]+offsets[i][0],y:clusterCenters[c.id][1]+offsets[i][1],domain:c.id})));
+  // A deep-linked nonrepresentative node replaces one representative, so selection remains visible.
+  if(selected&&!entries.some(n=>n.id===selected)){
+   const k=knowledgeById[selected],same=entries.filter(n=>n.domain===k.domain),slot=same.at(-1);slot.id=selected;
+  }
+  return {nodes:entries,width:1040,height:780};
+ }
+ const list=knowledge.filter(k=>k.domain===filter);
+ if(compact)return {nodes:list.map((k,i)=>({id:k.id,x:42+(i%2)*212,y:55+Math.floor(i/2)*88,domain:k.domain})),width:440,height:Math.ceil(list.length/2)*88+40};
+ return {nodes:list.map((k,i)=>({id:k.id,x:125+(i%3)*260+(Math.floor(i/3)%2?25:0),y:88+Math.floor(i/3)*122,domain:k.domain})),width:860,height:Math.max(580,Math.ceil(list.length/3)*122+50)};
+}
+export default function Constellation({id,view,progress}){
+ const [compact,setCompact]=useState(innerWidth<=720);
+ useEffect(()=>{const media=matchMedia('(max-width:720px)'),change=()=>setCompact(media.matches);media.addEventListener('change',change);return()=>media.removeEventListener('change',change);},[]);
+ const initial=id&&chapterById[id]?id:(innerWidth<720?'py':'all');
+ const [filter,setFilter]=useState(initial),[query,setQuery]=useState(''),[selected,setSelected]=useState(knowledgeById[view]?view:(initial==='all'?'ml-splits':representatives[initial][0])),[list,setList]=useState(false),[zoom,setZoom]=useState(1);
+ const viewport=useRef(),drag=useRef(),node=knowledgeById[selected],related=topicsFor(selected);
+ const layout=useMemo(()=>positions(filter,selected,compact),[filter,selected,compact]);
+ const points=useMemo(()=>Object.fromEntries(layout.nodes.map(n=>[n.id,n])),[layout]);
+ const matching=knowledge.filter(k=>(filter==='all'||k.domain===filter)&&[k.title,k.subtitle,k.id].join(' ').toLowerCase().includes(query.trim().toLowerCase()));
+ const isList=list||!!query.trim();
+ function chooseDomain(value){setFilter(value);setZoom(1);setQuery('');if(value!=='all')setSelected(representatives[value][0]);viewport.current?.scrollTo(0,0);}
+ function choose(id){setSelected(id);}
+ const rail=<><div className="atlas-rail-title"><h2>知识星图</h2><p>按先修关系查找知识</p></div><label className="atlas-map-search"><Icon name="Search" size={16}/><input aria-label="搜索星图知识点" placeholder="搜索知识点" value={query} onChange={e=>setQuery(e.target.value)}/>{query&&<button aria-label="清除星图搜索" onClick={()=>setQuery('')}><Icon name="X" size={14}/></button>}</label><nav className="atlas-chapter-nav" aria-label="星图领域"><button className={filter==='all'?'active':''} onClick={()=>chooseDomain('all')}><Icon name="Orbit" size={17}/>全部领域</button>{chapters.map(c=><button key={c.id} className={filter===c.id?'active':''} onClick={()=>chooseDomain(c.id)}><i style={{background:c.color}}/>{c.name}<small>{knowledge.filter(k=>k.domain===c.id).length}</small></button>)}</nav><div className="atlas-rail-footer atlas-legend"><span><i className="learned"/>已完成检查</span><span><i/>未完成检查</span></div></>;
+ return <AtlasShell rail={rail} identity={id||'all'} kind="atlas-map"><div className="atlas-map-work"><section className="atlas-map-surface"><header className="atlas-map-head"><h1>{filter==='all'?'把知识连起来。':chapterById[filter].name}</h1><p>{filter==='all'?'总览显示代表节点，选择领域展开全部知识。':'选择一个节点，查看先修、讲解与关联课题。'}</p><small>{filter==='all'?knowledge.length+' 个知识点 · 8 个领域':'箭头从先修指向后续知识；选中后显示直接依赖。'}</small></header>{isList?<div className="atlas-map-results"><p>{matching.length} 个结果{query&&<span> · 搜索“{query}”</span>}</p>{matching.length?<div className="atlas-node-list">{matching.map(k=><button key={k.id} className={selected===k.id?'selected':''} onClick={()=>choose(k.id)}><span><strong>{k.title}</strong><small>{k.subtitle}</small></span><Icon name="ChevronRight" size={16}/></button>)}</div>:<p role="status">没有匹配项。可以换一个词，或切换到全部领域。</p>}</div>:<div className="atlas-map-viewport" ref={viewport} onPointerDown={e=>{if(e.target.closest('[data-star]'))return;drag.current={x:e.clientX,y:e.clientY,left:e.currentTarget.scrollLeft,top:e.currentTarget.scrollTop};e.currentTarget.setPointerCapture(e.pointerId);}} onPointerMove={e=>{if(drag.current){e.currentTarget.scrollLeft=drag.current.left+drag.current.x-e.clientX;e.currentTarget.scrollTop=drag.current.top+drag.current.y-e.clientY;}}} onPointerUp={()=>{drag.current=null;}} onPointerCancel={()=>{drag.current=null;}}><svg className="atlas-stars" viewBox={'0 0 '+layout.width+' '+layout.height} style={{width:zoom*100+'%',minWidth:filter==='all'?580*zoom:compact?0:660*zoom}} role="group" aria-label="知识先修星图"><defs><marker id="star-arrow" viewBox="0 0 8 8" refX="8" refY="4" markerWidth="4" markerHeight="4" orient="auto"><path d="M0 0L8 4L0 8" fill="#b86645"/></marker></defs>{filter==='all'&&chapters.map(c=><text key={c.id} className="star-cluster-title" x={clusterCenters[c.id][0]-47} y={clusterCenters[c.id][1]-100}>{c.name}</text>)}{layout.nodes.flatMap(n=>knowledgeById[n.id].prereqs.filter(p=>points[p]).map(p=>{const a=points[p],focus=n.id===selected||p===selected;if(filter!=='all'&&!focus)return null;if(filter==='all'&&a.domain!==n.domain&&!focus)return null;return <path key={p+'-'+n.id} className={'star-edge '+(focus?'focused':'')} d={'M'+a.x+' '+a.y+' L'+n.x+' '+n.y} markerEnd={focus?'url(#star-arrow)':undefined}/>;}))}{layout.nodes.map(n=>{const k=knowledgeById[n.id],active=n.id===selected,completed=progress.state.lessons[n.id]?.completed;const relationship=node.prereqs.includes(n.id)||k.prereqs.includes(selected);return <g key={n.id} data-star={n.id} className={'star-node '+(active?'selected ':'')+(completed?'completed ':'')+(relationship?'related':'')} role="button" tabIndex={0} aria-label={k.title+(active?'，已选中':'')} aria-pressed={active} onClick={()=>choose(n.id)} onDoubleClick={()=>{location.hash='knowledge/'+n.id;}} onKeyDown={e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();choose(n.id);}}}><title>{k.title}</title><circle className="star-hit" cx={n.x} cy={n.y} r="21"/>{active&&<circle className="star-halo" cx={n.x} cy={n.y} r="14"/>}<circle className="star-dot" cx={n.x} cy={n.y} r={active?8:5.5}/><text x={n.x+15} y={n.y+5}>{shortTitle(k).length>12?shortTitle(k).slice(0,11)+'…':shortTitle(k)}</text></g>;})}</svg></div>}<div className="atlas-map-tools"><div><button aria-label="放大星图" disabled={isList||zoom>=1.8} onClick={()=>setZoom(z=>Math.min(1.8,z+.2))}><Icon name="Plus" size={17}/></button><button aria-label="缩小星图" disabled={isList||zoom<=.8} onClick={()=>setZoom(z=>Math.max(.8,z-.2))}><Icon name="Minus" size={17}/></button><button aria-label="复位星图" onClick={()=>{setZoom(1);viewport.current?.scrollTo(0,0);}}><Icon name="RotateCcw" size={16}/></button></div><div className="map-mode"><button aria-pressed={!list} onClick={()=>{setList(false);setQuery('');}}>星图</button><button aria-pressed={list} onClick={()=>setList(true)}>列表</button></div><span>{!isList?'拖动画布 · 双击打开讲解':'点击结果查看关系'}</span></div>{compact&&<div className="map-mobile-selection"><span>{node.title}</span><a href={'#knowledge/'+selected}>打开讲解<Icon name="ArrowRight" size={15}/></a></div>}</section><aside className="atlas-inspector" aria-label="选中知识点"><div className="atlas-breadcrumb">{chapterById[node.domain].name}<Icon name="ChevronRight" size={14}/></div><h2>{node.title}</h2><p>{node.subtitle}</p><p className="inspector-definition">{node.parts[0][1].replace(/```[\s\S]*?```/g,'').replace(/`/g,'').split('\n\n')[0].slice(0,220)}</p><section><h3>先修知识</h3>{node.prereqs.length?node.prereqs.map(k=><button key={k} className="inspector-prereq" onClick={()=>{setFilter(knowledgeById[k].domain);setSelected(k);setZoom(1);setQuery('');setList(false);viewport.current?.scrollTo(0,0);}}><i/>{knowledgeById[k].title}<Icon name="ChevronRight" size={14}/></button>):<p>可以从这里开始。</p>}</section><section><h3>用于这些课题</h3>{related.length?related.map(t=><a key={t.id} className="inspector-topic" href={topicHref(t.id)}><Icon name="FileCode2" size={17}/><span>{t.title}</span><Icon name="ChevronRight" size={14}/></a>):<p>拓展知识，可用于本章的自选实验。</p>}</section><a className="atlas-primary inspector-open" href={'#knowledge/'+selected}>打开知识点<Icon name="ArrowRight" size={16}/></a></aside></div></AtlasShell>;
+}
+

@@ -1,0 +1,37 @@
+import {topic as T,step as S} from './catalog.js';
+export const dlTopics=[
+ T('micrograd','dl','从零实现自动微分','复现 micrograd 的核心机制，追踪一个梯度怎样传回参数。','入门','浏览器算例 + 本地 CPU',['math-grad','py-references','dl-autograd','dl-backprop','dl-mlp'],[
+  S('读懂计算图','让一个数记住它从哪里来，再沿计算图把梯度传回去。',['math-grad','dl-autograd','py-references'],['画出 y=x×x+x。x=3 时 y=12，dy/dx=7。','在 Value 中定位数值、梯度、父节点和局部反向函数。','将同一个 x 用作多个输入，逐条标注梯度贡献。'],['能区分共享节点与复制出来的新节点','手算每条路径的贡献，总和为 7'],'micrograd/engine.py'),
+  S('实现局部求导','加法与乘法足以构成第一个可反传的表达式。',['dl-autograd','py-functions'],['自行实现加法和乘法的前向结果及父节点记录。','将上游梯度乘以局部导数；先假设上游梯度为 1，再改为 2 验证。','加入常数输入的转换，以及 a+a、a*a 两种共享情况。'],['x*x 的两条输入路径均累计','常数与 Value 的左右操作均有明确行为'],'micrograd/engine.py'),
+  S('累加与拓扑顺序','一个节点的所有下游贡献准备好之后，才能向它的上游传递。',['dl-autograd','py-containers'],['给共享图做后序遍历，记录 visited 与 topo 的职责。','反向遍历 topo，逐个调用局部反向函数。','故意将 += 改成 =，记录哪个共享图用例会失败。'],['每个节点反向函数执行一次','解释去重节点与累加路径并不矛盾'],'micrograd/engine.py'),
+  S('检查梯度','用独立方法检验自己的反向实现。',['math-grad','eng-tests'],['对光滑点用中心差分，扫描 h=1e-2 到 1e-6。','本地安装测试所需 PyTorch，与 test_engine.py 的参考比较方式对照。','补充共享节点、链式组合和 ReLU 正负区间测试；0 点另注明约定。'],['数值误差与步长有关，未宣称严格相等','用例失败时可以定位到具体算子'],'test/test_engine.py'),
+  S('训练小网络','把已经检查过的 Value 用于参数、层和损失。',['dl-mlp','dl-backprop','ml-splits'],['读 nn.py 的 Neuron、Layer、MLP 和 parameters。','在固定种子二维合成数据上训练；记录训练和留出损失。','每步先清零梯度，再反传与更新；将结果和原仓库 demo 的损失选择区分。'],['有未参与训练的数据与简单基线','交付自己的最小实现及测试，不只交截图'],'micrograd/nn.py'),
+ ],{source:'micrograd',scope:'机制级复现：标量计算图、反向传播、有限差分与小型 MLP。不是张量引擎，也不复现大规模训练性能。',deliver:'Value 实现、梯度测试、计算图与小网络实验',data:'自行生成的二维数据；原 demo 的 moons 可作为另一个对照。',figure:'autograd'}),
+ T('training-loop','dl','训练一个可靠的图像基线','从 FashionMNIST 建立数据加载、损失、优化和评估循环。','入门','本地 · CPU 可跑 / PyTorch',['dl-tensors','dl-mlp','dl-backprop','dl-regularize','dl-normalization'],[
+  S('核对批次与标签','一张图片、一个批次和网络输入是三个不同层次。',['dl-tensors','dl-mlp'],['阅读官方 NeuralNetwork 与 DataLoader。','记录 [B,1,28,28] → [B,784] → [B,10] 的形状。','打印标签范围与 dtype，先只跑一批前向。'],['每个轴含义有注释','输出 logits 没有提前做 softmax'],'beginner_source/basics/optimization_tutorial.py'),
+  S('让一小批先学会','如果连极小训练集都无法拟合，先排查实现。',['dl-backprop','dl-regularize'],['固定 32 个样本，关闭随机增强，观察损失能否明显下降。','查 zero_grad、backward、step 的位置。','分别故意打乱标签、关掉更新或改变学习率，记录可识别的症状。'],['能解释每个训练步骤的责任','保留一次失败实验与修复证据'],'beginner_source/basics/optimization_tutorial.py'),
+  S('从会拟合到能泛化','恢复完整训练后，才讨论泛化和模型选择。',['ml-splits','dl-regularize','dl-normalization'],['从训练数据另留验证集；原测试集不用于选择 epoch。','比较两种正则化，记录 train/eval 模式和随机种子。','保存最佳验证模型，用新进程加载后评估一次测试。'],['模型与环境可恢复','曲线区分优化困难和过拟合'],'beginner_source/basics/optimization_tutorial.py'),
+ ],{source:'torch',scope:'参考官方优化教程并补充独立验证集与失败注入。完整训练在本地，网页提供步骤和知识讲解。',deliver:'训练脚本、损失曲线、checkpoint、错例说明',data:'FashionMNIST，首次下载需网络；记录官方数据来源。',after:'micrograd'}),
+ T('transfer-vision','dl','给小样本图片做分类','复现 ResNet 迁移学习，比较冻结主干与微调。','进阶','本地 · GPU 推荐，CPU 可缩小实验',['dl-cnn','dl-resnet','dl-normalization','dl-regularize','ml-metrics'],[
+  S('数据与预训练约定','预训练模型的输入约定也是模型的一部分。',['dl-cnn','ml-splits'],['阅读数据变换与预训练权重的选取。','训练增强与验证变换分开；记录 resize、crop、归一化。','按图像主体来源检查重复和近重复，防止跨集合。'],['训练与验证的类别索引一致','预处理匹配选用权重'],'beginner_source/transfer_learning_tutorial.py'),
+  S('冻结主干','先训练最后的分类层，建立便宜而清楚的基线。',['dl-resnet','dl-backprop','dl-normalization'],['定位 requires_grad=False 与新分类层的创建。','打印可训练参数数目，检查优化器只含目标参数。','单独检查 BatchNorm 的 train/eval 行为；冻结梯度不等于冻结统计量。'],['梯度检查证实主干未更新','明确 BatchNorm 运行统计如何处理'],'beginner_source/transfer_learning_tutorial.py'),
+  S('小步微调','只改一种微调策略，再比较收益与代价。',['dl-regularize','ml-validation'],['解冻最后一个残差阶段，使用较小主干学习率。','同一切分、同一预算比较验证曲线和逐类错误。','记录最佳验证 checkpoint 与总训练时间。'],['对照有明确自变量','没有根据测试集反复选择微调层数'],'beginner_source/transfer_learning_tutorial.py'),
+  S('分析失败图像','准确率不能告诉你模型为何失败。',['ml-metrics','ml-interpret'],['保存至少十个错例及置信度，按遮挡、背景和类别歧义归类。','用一批自己有权使用的新图片做分布外观察。','说明少量样本和预训练语料未知带来的边界。'],['错例有具体证据','分布外观察未冒充代表性测试'],'beginner_source/transfer_learning_tutorial.py'),
+ ],{source:'torch',scope:'官方迁移学习教程使用 ResNet 和小型二分类图片集；扩展多类之前先完成冻结/微调对照。',deliver:'两种训练配置、参数冻结检查、错例册',data:'教程的 hymenoptera_data；预训练权重与数据均需单独下载。',after:'training-loop'}),
+ T('sequence-translation','dl','从序列到一个小翻译器','复现编码器—解码器与注意力，观察训练和生成的差异。','进阶','本地 · PyTorch，GPU 推荐',['dl-sequence','dl-embeddings','dl-attention','dl-token-training'],[
+  S('句子变成序列','词表、终止符、padding 与长度决定网络真正看到了什么。',['dl-embeddings','dl-tensors'],['阅读 Lang、normalizeString 和数据筛选条件。','先划分句子对，再从训练集建立词表，记录 OOV。','打印一批输入、目标和长度，解释 EOS 与 PAD 不可混用。'],['词表来源和过滤规则可追溯','长度与 mask 一致'],'intermediate_source/seq2seq_translation_tutorial.py'),
+  S('训练条件与推理条件','训练时提供真实前词，推理时模型必须接住自己的输出。',['dl-sequence','dl-token-training'],['定位 DecoderRNN 的 target_tensor 分支。','将 teacher forcing 与自由生成放在同一组样本上比较。','打印注意力矩阵，核对 padding 位置是否应被遮罩。'],['解释误差怎样沿生成步骤累积','不会把注意力图当语义因果解释'],'intermediate_source/seq2seq_translation_tutorial.py'),
+  S('评估一个小系统','“能生成一句话”不等于翻译任务已经解决。',['ml-splits','llm-eval'],['保留未参与训练的句子，按长度和未登录词统计表现。','比较贪心输出与一个简单复制基线，人工检查语义和遗漏。','报告数据筛选后覆盖的语言现象，不扩张为通用翻译能力。'],['评估样本未进入训练','复现范围和失败类型明确'],'intermediate_source/seq2seq_translation_tutorial.py'),
+ ],{source:'torch',scope:'复现官方小型 seq2seq 教学系统；数据量、词表和句长受限，重点是状态、注意力与生成协议。',deliver:'分词字典、训练脚本、留出译文与错误分析',data:'教程链接的双语句子对，按其归属与使用说明处理。',after:'training-loop'}),
+ T('tiny-transformer','dl','搭建并训练一个小 Transformer','从注意力、残差和归一化走到下一 token 预测。','深入','本地 · PyTorch；完整预训练需另估算资源',['dl-attention','dl-transformer','dl-normalization','dl-token-training','llm-tokens'],[
+  S('实现因果注意力','先在几个 token 上验证每一行权重，再扩大网络。',['dl-attention','dl-tensors'],['读第 3 章的注意力实现，记录 Q/K/V 和多头变形。','更改未来 token，断言更早位置的输出不变。','验证 softmax 归一化轴和 dropout 位置。'],['未来遮罩发生在 softmax 之前','形状检查与因果性测试都通过'],'ch03/01_main-chapter-code/ch03.ipynb'),
+  S('组装 Transformer 块','注意力只完成混合信息，网络还需要逐位置变换和稳定的信号路径。',['dl-transformer','dl-normalization','dl-resnet'],['阅读 LayerNorm、GELU、FeedForward 与 TransformerBlock。','跟踪 [B,T,C] 的每层变化及残差形状。','统计参数量，把主干与词表输出矩阵分开。'],['能解释每个组件为何存在','随机初始化模型生成乱码属于预期'],'ch04/01_main-chapter-code/ch04.ipynb'),
+  S('建立训练数据与损失','输入窗口和目标窗口相差一个 token。',['dl-token-training','ml-splits'],['构造很小的配置做 CPU 冒烟：短上下文、少层、小隐藏维度。','按文档边界划分数据，避免重叠窗口跨训练与验证。','读 calc_loss_batch，核对 flatten 与标签 shape。'],['没有直接运行大配置后等待无限时间','损失计算没有把未来目标作为输入'],'ch05/01_main-chapter-code/gpt_train.py'),
+  S('复现、消融与生成','在固定预算内改变一个部件，用验证损失检验影响。',['dl-regularize','llm-tokens'],['保存配置、token 数、种子与依赖；设置训练步数上限。','选择移除位置编码或改变上下文长度中的一项做对照。','展示生成样本与验证损失，注明小规模教学实验不等于复现 GPT-2 质量。'],['对照按实际 token 预算说明','报告实际硬件、时间和检查点'],'ch05/01_main-chapter-code/gpt_train.py'),
+ ],{source:'llms',scope:'参考第 3–5 章复现核心机制，先完成缩小配置。未宣称在网页训练大模型或复现原始大规模指标。',deliver:'注意力测试、模型实现、配置、学习曲线与样本',data:'自行有权使用的小文本；训练与验证按文档分离。',after:'sequence-translation'}),
+ T('generative-lab','dl','观察一个生成模型怎样训练','以 DCGAN 复现为主，比较 VAE 与扩散的训练目标。','深入','本地 · GPU 推荐 / PyTorch',['dl-gan','dl-vae','dl-diffusion','dl-generative','dl-cnn'],[
+  S('区分三类训练目标','重建、对抗与去噪不是同一个损失换名字。',['dl-vae','dl-gan','dl-diffusion'],['写出三类模型的训练对象、随机变量和采样过程。','手算高斯 VAE 的 KL 项与扩散前向加噪。','本课题实际实现 DCGAN，另两类是目标推导和后续扩展。'],['能区分训练目标与采样算法','未把推导算例标为完整模型复现']),
+  S('交替更新两个网络','更新判别器和生成器时，计算图的连接有不同要求。',['dl-gan','dl-backprop'],['定位教程中真假批次及两次优化器更新。','解释判别器阶段为何截断生成器梯度，生成器阶段为何保留判别器输入梯度。','固定噪声向量，在各 epoch 保存同一批生成结果。'],['两个优化步骤的参数和梯度范围明确','图像与训练日志有同一时间标记'],'beginner_source/dcgan_faces_tutorial.py'),
+  S('记录失败而不是挑好图','只展示好看的生成样本会掩盖模式坍塌。',['dl-gan','ml-metrics'],['比较不同种子的多样性与重复样本，保存完整固定网格。','分别检查数据归一化和生成器输出范围。','若数据下载或许可不满足，使用有权使用的数据并说明未复现原数据条件。'],['保留失败运行与训练不稳定性','样本观感与分布覆盖结论分开'],'beginner_source/dcgan_faces_tutorial.py'),
+ ],{source:'torch',scope:'实际复现范围为 DCGAN；VAE 与 DDPM 在知识页有独立原理说明，不冒充已完成其训练复现。',deliver:'双优化器训练、固定噪声样本网格、失败分析',data:'官方教程的人脸数据需另行取得；不得自动替用户接受条款或下载受限数据。',after:'transfer-vision'}),
+];
