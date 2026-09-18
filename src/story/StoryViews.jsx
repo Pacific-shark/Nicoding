@@ -5,6 +5,7 @@ import Shopfront from './Shopfront.jsx';
 import {domains} from '../data/index.js';
 import {journeys} from '../journeys/catalog.js';
 import {acts,chapters,chapterOrder,chapterNumber,completeChapter,missingRequirements,firstUnfinished,recommendedChapter} from './catalog.js';
+import {COURSE,courseHref,unitById} from '../courses/bank/registry.js';
 
 export function ChapterScene({id,motion=true}) {
  const c=chapters[id];
@@ -23,7 +24,8 @@ export function ChapterScene({id,motion=true}) {
 export function StoryHome({state}) {
  const target=state.lastJourney&&!completeChapter(state,state.lastJourney)?state.lastJourney:recommendedChapter(state);
  const started=Object.keys(state.journeys||{}).length>0;
- const entryHref='#chapter/'+target;
+ const course=state.courses?.[COURSE],resume=state.lastCourse===COURSE&&!state.lastJourney&&unitById[course?.last];
+ const entryHref=resume?courseHref(course.last):'#chapter/'+target;
  function showChapters(e) {
   e.preventDefault();
   const heading=document.getElementById('shop-chapters-title');
@@ -72,5 +74,5 @@ export function ChapterOpening({id,state}) {
 }
 
 export function KnowledgeLibrary({state}) {
- return <main className="knowledge-library"><h1>知识索引</h1><p>想查哪个概念，直接找就好。</p><div>{chapterOrder.map(id=>{const d=domains.find(d=>d.id===id),c=chapters[id];return <a key={id} href={'#path/'+id} style={{'--story-accent':c.color}}><Icon name={c.icon} size={24}/><span><h2>{d.name}</h2><p>{c.beats.map(b=>b[2]).join(' / ')}</p></span><Icon name="ArrowRight" size={20}/></a>;})}</div></main>;
+ return <main className="knowledge-library"><h1>知识索引</h1><p>想查哪个概念，直接找就好。</p><div>{chapterOrder.map(id=>{const d=domains.find(d=>d.id===id),c=chapters[id];return <a key={id} href={id==='ml'?'#chapter/ml':'#path/'+id} style={{'--story-accent':c.color}}><Icon name={c.icon} size={24}/><span><h2>{d.name}</h2><p>{id==='ml'?'项目课程 · 12 小节 / Python 练习 / 真实模型训练 / 冻结验收':c.beats.map(b=>b[2]).join(' / ')}</p></span><Icon name="ArrowRight" size={20}/></a>;})}</div></main>;
 }

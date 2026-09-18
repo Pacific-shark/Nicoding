@@ -1,4 +1,5 @@
 import {journeys} from '../journeys/catalog.js';
+import {COURSE,completed} from '../courses/bank/registry.js';
 
 export const chapterOrder=['py','web','eng','math','ml','dl','llm','rl'];
 export const acts=[{title:'开张那几天',ids:['py','web','eng']},{title:'客人多起来了',ids:['math','ml','dl']},{title:'找个帮手',ids:['llm','rl']}];
@@ -50,7 +51,7 @@ export const chapters={
  ['仓库改了，旧经验还靠谱吗？','在原路线增加障碍，保持旧 Q 表复测。成功过一次，不代表环境变化后仍能成功。','变化复测','保存新环境中的结果与局限。']]}
 };
 export const chapterNumber=id=>chapterOrder.indexOf(id)+1;
-export function completeChapter(state,id){return journeys[id].stages.every((_,i)=>!!state.journeys?.[id]?.evidence?.[i]);}
+export function completeChapter(state,id){return id==='ml'&&completed(state.courses?.[COURSE])===12||journeys[id].stages.every((_,i)=>!!state.journeys?.[id]?.evidence?.[i]);}
 export function missingRequirements(state,id){return chapters[id].requires.filter(r=>!completeChapter(state,r.id)&&!r.skills.every(key=>state.lessons?.[key]?.completed));}
 export function firstUnfinished(state,id){const i=journeys[id].stages.findIndex((_,i)=>!state.journeys?.[id]?.evidence?.[i]);return i<0?journeys[id].stages.length-1:i;}
 export function recommendedChapter(state){return chapterOrder.find(id=>!completeChapter(state,id)&&!missingRequirements(state,id).length)||'py';}

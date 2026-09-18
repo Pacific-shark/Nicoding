@@ -2,3 +2,6 @@
 *.cmd text eol=crlf
 *.sh text eol=lf
 *.yml text eol=lf
+# Preserve the licensed dataset, source checksums and reproducible download bundle.
+public/learning/bank/** -text
+public/learning/bank/bank-names.txt -whitespace
