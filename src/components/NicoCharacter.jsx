@@ -18,6 +18,7 @@ export default function NicoCharacter({pose=0,motion=true,className=''}) {
  const legMaskId=`nico-leg-matte-${id}`,legAreaId=`nico-leg-area-${id}`;
  const legColorMaskId=`nico-leg-color-${id}`,legFeatherId=`nico-leg-feather-${id}`;
  const current=Number.isInteger(pose)&&pose>=0&&pose<frames.length?pose:0;
+ const frame=frames[current];
  const source=`${import.meta.env.BASE_URL}assets/nico-poses-v2.png`;
  const matte=`${import.meta.env.BASE_URL}assets/nico-foreground-v3.png`;
  // One hind paw has mostly black pads and a small dark tuft just behind them.
@@ -54,13 +55,13 @@ export default function NicoCharacter({pose=0,motion=true,className=''}) {
      <image data-nico-leg-matte="" href={legMatte} width="1536" height="1024" filter={`url(#${filterId})`} clipPath={`url(#${legAreaId})`}/>
     </mask>
    </defs>
-   {frames.map((frame,index)=><svg key={index} data-nico-frame={index} x="0" y={frame.top} width="512" height={frame.height} viewBox={`${frame.x} ${frame.y} 512 ${frame.height}`} overflow="hidden" display={index===current?'block':'none'}>
-    <image href={source} width="1536" height="1024" mask={`url(#${index<=3?legMaskId:maskId})`}/>
-    {index<=3&&<g mask={`url(#${legMaskId})`}><image data-nico-leg-fix="" href={legEdit} width="1536" height="1024" mask={`url(#${legColorMaskId})`} clipPath={`url(#${legAreaId})`}/></g>}
-    {index===4&&<image href={pawEdit} width="1536" height="1024" mask={`url(#${maskId})`} clipPath={`url(#${pawId})`}/>}
-    {index===4&&<image data-nico-sole-tuft="" href={tuftEdit} width="1536" height="1024" mask={`url(#${maskId})`} clipPath={`url(#${tuftId})`}/>}
-    {index===5&&<image href={pawEdit} width="1536" height="1024" mask={`url(#${maskId})`} clipPath={`url(#${walkPawId})`}/>}
-   </svg>)}
+   <svg data-nico-frame={current} x="0" y={frame.top} width="512" height={frame.height} viewBox={`${frame.x} ${frame.y} 512 ${frame.height}`} overflow="hidden">
+    <image href={source} width="1536" height="1024" mask={`url(#${current<=3?legMaskId:maskId})`}/>
+    {current<=3&&<g mask={`url(#${legMaskId})`}><image data-nico-leg-fix="" href={legEdit} width="1536" height="1024" mask={`url(#${legColorMaskId})`} clipPath={`url(#${legAreaId})`}/></g>}
+    {current===4&&<image href={pawEdit} width="1536" height="1024" mask={`url(#${maskId})`} clipPath={`url(#${pawId})`}/>}
+    {current===4&&<image data-nico-sole-tuft="" href={tuftEdit} width="1536" height="1024" mask={`url(#${maskId})`} clipPath={`url(#${tuftId})`}/>}
+    {current===5&&<image href={pawEdit} width="1536" height="1024" mask={`url(#${maskId})`} clipPath={`url(#${walkPawId})`}/>}
+   </svg>
   </svg></span>
  </span>;
 }

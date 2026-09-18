@@ -45,11 +45,11 @@ export default function NicoCompanion({motion,celebration,resetKey,lesson,comple
   return()=>{cancelAnimationFrame(frame);document.removeEventListener('keydown',key);document.removeEventListener('pointerdown',outside);};
  },[menu]);
  useEffect(()=>{
-  if(!motion||matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+  if(!motion||minimized||suspended||matchMedia('(prefers-reduced-motion: reduce)').matches)return;
   let blinkTimer;
   const blink=setInterval(()=>{if(drag.current||menu||bubble)return;if(Date.now()-last.current>90000){setSleep(true);setPose(4);return;}if(!sleep){setPose(1);blinkTimer=setTimeout(()=>setPose(0),180);}},5100);
   return()=>{clearInterval(blink);clearTimeout(blinkTimer);};
- },[motion,menu,bubble,sleep]);
+ },[motion,menu,bubble,sleep,minimized,suspended]);
  useEffect(()=>{if(celebration>0)respond('这次是有证据的进步。击个掌！',3);},[celebration]);
  useEffect(()=>{const celebrate=()=>respond('这一步做好了，去看看接下来发生什么。',3);window.addEventListener('nicoding-evidence',celebrate);return()=>window.removeEventListener('nicoding-evidence',celebrate);},[]);
  useEffect(()=>()=>clearTimeout(timer.current),[]);

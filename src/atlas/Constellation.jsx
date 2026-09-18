@@ -6,9 +6,10 @@ import {topicsFor,topicHref} from './topics.js';
 import {AtlasShell} from './AtlasShell.jsx';
 import KnowledgeSpace from './KnowledgeSpace.jsx';
 import KnowledgeCat from './KnowledgeCat.jsx';
+import RecoveryBoundary from '../components/RecoveryBoundary.jsx';
 import {personality,difficultyLevels} from './knowledge-personality.js';
 import {domainKnowledge,domainPoints,globalPoints} from './knowledge-layout.js';
-import {GLOBAL_CAMERA,clamp,dragCamera} from './space-geometry.js';
+import {GLOBAL_CAMERA,clamp,dragCamera,focusCamera} from './space-geometry.js';
 
 const defaultCamera=()=>({...GLOBAL_CAMERA});
 
@@ -29,19 +30,19 @@ export default function Constellation({id,view,progress}) {
  const [mode,setMode]=useState(chapterById[id]||knowledgeById[view]?'local':'global');
  const [domain,setDomain]=useState(initial),[selected,setSelected]=useState(knowledgeById[view]?view:(initial==='ml'?'ml-splits':domainKnowledge[initial][0].id));
  const [query,setQuery]=useState(''),[list,setList]=useState(false);
- const [cameras,setCameras]=useState(()=>({...Object.fromEntries(chapters.map(c=>[c.id,defaultCamera(c.id)])),global:{...GLOBAL_CAMERA},[initial]:defaultCamera(initial,view)}));
+ const [cameras,setCameras]=useState(()=>({...Object.fromEntries(chapters.map(c=>[c.id,defaultCamera()])),global:focusCamera(globalPoints.find(p=>p.id===selected)),[initial]:focusCamera(domainPoints[initial].find(p=>p.id===selected))}));
  const cameraKey=mode==='global'?'global':domain,camera=cameras[cameraKey];
  const isList=list||!!query.trim(),chapter=chapterById[domain],node=knowledgeById[selected];
  const matching=useMemo(()=>knowledge.filter(k=>(mode==='global'||k.domain===domain)&&[k.title,k.subtitle,k.id].join(' ').toLowerCase().includes(query.trim().toLowerCase())),[domain,mode,query]);
  const onCamera=value=>setCameras(previous=>({...previous,[cameraKey]:value}));
  function chooseDomain(value){setDomain(value);if(node.domain!==value)setSelected(domainKnowledge[value][0].id);setQuery('');}
  function chooseNode(value,focus=false){
-  const next=knowledgeById[value];setSelected(value);setDomain(next.domain);
-  if(focus||isList){const target=domainPoints[next.domain].find(p=>p.id===value);setMode('local');setList(false);setQuery('');setCameras(previous=>({...previous,[next.domain]:{...defaultCamera(),target,focusId:value}}));}
+  const next=knowledgeById[value];if(!next)return;setSelected(value);setDomain(next.domain);
+  if(focus||isList){const target=domainPoints[next.domain].find(p=>p.id===value);setMode('local');setList(false);setQuery('');setCameras(previous=>({...previous,[next.domain]:focusCamera(target)}));}
  }
  function focusSelected(){
   const point=(mode==='global'?globalPoints:domainPoints[domain]).find(p=>p.id===selected);
-  onCamera({...camera,target:{x:point.x,y:point.y,z:point.z},focusId:selected,zoom:mode==='global'?1.55:1.1});
+  onCamera(focusCamera(point,camera));
  }
  const reset=()=>onCamera(mode==='global'?{...GLOBAL_CAMERA}:defaultCamera(domain,domainKnowledge[domain][0].id));
  const rail=<>
@@ -51,7 +52,7 @@ export default function Constellation({id,view,progress}) {
   <nav className="atlas-chapter-nav" aria-label="星图领域">{chapters.map(c=><button key={c.id} className={domain===c.id?'active':''} aria-pressed={domain===c.id} onClick={()=>chooseDomain(c.id)}><i style={{background:c.color}}/>{c.name}<small>{domainKnowledge[c.id].length}</small></button>)}</nav>
   <div className="space-controller">
    <h3>视角</h3>
-   <div className="space-zoom"><button aria-label="缩小星图" disabled={isList||camera.zoom<=.7} onClick={()=>onCamera({...camera,zoom:clamp(camera.zoom-.1,.7,1.6)})}><Icon name="Minus" size={16}/></button><output aria-label="当前缩放">{Math.round(camera.zoom*100)}%</output><button aria-label="放大星图" disabled={isList||camera.zoom>=1.6} onClick={()=>onCamera({...camera,zoom:clamp(camera.zoom+.1,.7,1.6)})}><Icon name="Plus" size={16}/></button></div>
+   <div className="space-zoom"><button aria-label="缩小星图" disabled={isList||camera.zoom<=.7} onClick={()=>onCamera({...camera,zoom:clamp(camera.zoom-.1,.7,1.25)})}><Icon name="Minus" size={16}/></button><output aria-label="当前缩放">{Math.round(camera.zoom*100)}%</output><button aria-label="放大星图" disabled={isList||camera.zoom>=1.25} onClick={()=>onCamera({...camera,zoom:clamp(camera.zoom+.1,.7,1.25)})}><Icon name="Plus" size={16}/></button></div>
    <button className="space-reset" disabled={isList} onClick={reset}><Icon name="RotateCcw" size={15}/>复位视角</button>
    <div className="space-direction" role="group" aria-label="转动视角">{[['向左转动','ChevronRight',-35,0],['向上转动','ChevronUp',0,-35],['向下转动','ChevronDown',0,35],['向右转动','ChevronRight',35,0]].map(([label,icon,x,y])=><button key={label} aria-label={label} disabled={isList} onClick={()=>onCamera(dragCamera(camera,x,y))}><Icon name={icon} size={16} style={x<0?{transform:'rotate(180deg)'}:undefined}/></button>)}</div>
    {<button className="space-focus" disabled={isList} onClick={focusSelected}><Icon name="Focus" size={15}/>定位选中知识</button>}
@@ -61,8 +62,8 @@ export default function Constellation({id,view,progress}) {
  </>;
  return <AtlasShell rail={rail} identity={id||'all'} kind="atlas-map atlas-space">
   <div className="atlas-map-work"><section className="atlas-map-surface">
-   <header className="atlas-map-head"><h1>{mode==='global'?'知识星图':chapter.name}</h1><p>{mode==='global'?'每只小猫是一个知识点，连线表示先修关系。':'沿着连线，查看这个领域的知识和先修关系。'}</p></header>
-   {isList?<div className="atlas-map-results"><p>{matching.length} 个结果{query&&<span> · 搜索“{query}”</span>}</p>{matching.length?<div className="atlas-node-list">{matching.map(k=><button key={k.id} onClick={()=>chooseNode(k.id,true)}><span><strong>{k.title}</strong><small>{k.subtitle}</small></span><Icon name="ChevronRight" size={16}/></button>)}</div>:<p role="status">没有匹配项。可以换一个词，或切换到全局。</p>}</div>:<KnowledgeSpace key={cameraKey} mode={mode} domain={domain} camera={camera} onCamera={onCamera} points={domainPoints[domain]} selected={selected} onSelect={chooseNode} progress={progress}/>}
+   <header className="atlas-map-head"><h1>{mode==='global'?'知识星图':chapter.name}</h1><p>{mode==='global'?'转动星图，探索知识之间的联系。':'沿着连线，查看这个领域的知识和先修关系。'}</p></header>
+   {isList?<div className="atlas-map-results"><p>{matching.length} 个结果{query&&<span> · 搜索“{query}”</span>}</p>{matching.length?<div className="atlas-node-list">{matching.map(k=><button key={k.id} onClick={()=>chooseNode(k.id,true)}><span><strong>{k.title}</strong><small>{k.subtitle}</small></span><Icon name="ChevronRight" size={16}/></button>)}</div>:<p role="status">没有匹配项。可以换一个词，或切换到全局。</p>}</div>:<RecoveryBoundary key={cameraKey} compact onList={()=>setList(true)}><KnowledgeSpace mode={mode} domain={domain} camera={camera} onCamera={onCamera} points={domainPoints[domain]} selected={selected} onSelect={chooseNode} progress={progress}/></RecoveryBoundary>}
    <footer className="space-caption"><div className="cat-expression-key" aria-label="难度表情图例">{difficultyLevels.map((level,i)=><span key={level.id}><svg viewBox="-28 -26 56 52" aria-hidden="true"><KnowledgeCat pose={0} level={i}/></svg>{level.label}</span>)}</div><span>{mode==='global'?'全局 · '+knowledge.length+' 个知识点':chapter.name+' · '+domainKnowledge[domain].length+' 个知识点'}</span><small>{'点击知识点查看 · 双击打开讲解 · 空白处按住左键拖动'}</small></footer>
   </section><aside className="atlas-inspector" aria-label="选中知识点">
    <KnowledgeInspector node={node} onChoose={chooseNode}/>

@@ -15,7 +15,7 @@
     "validate:courses": "node scripts/validate-courses.mjs",
     "validate:bank": "python scripts/validate-bank.py",
     "validate:atlas": "node scripts/validate-atlas.mjs",
-    "validate:space": "node scripts/validate-space.mjs"
+    "validate:space": "node scripts/validate-space.mjs && node scripts/validate-render-budget.mjs"
   },
   "dependencies": {
     "lucide-react": "1.42.0",

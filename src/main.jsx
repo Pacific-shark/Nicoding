@@ -1,6 +1,7 @@
 import React from 'react';
 import {createRoot} from 'react-dom/client';
 import App from './App.jsx';
+import RecoveryBoundary from './components/RecoveryBoundary.jsx';
 import './styles.css';
 import './interaction.css';
 import './roadmap.css';
@@ -11,4 +12,4 @@ import './journeys/journeys.css';
 import './story/story.css';
 import './story/nico.css';
 import './story/shop.css';
-createRoot(document.getElementById('root')).render(<App/>);
+createRoot(document.getElementById('root')).render(<RecoveryBoundary><App/></RecoveryBoundary>);
