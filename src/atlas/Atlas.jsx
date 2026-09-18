@@ -4,6 +4,7 @@ import Constellation from './Constellation.jsx';
 import KnowledgePage from './KnowledgePage.jsx';
 import {topicById} from './topics.js';
 import './atlas.css';
+import './space.css';
 export default function Atlas({page,id,view,progress}){
  if(page==='library'||page==='path')return <Constellation key={(id||'all')+'/'+(view||'')} id={id} view={view} progress={progress}/>;
  if(page==='knowledge'||page==='learn')return <KnowledgePage key={id} id={id} view={view} progress={progress}/>;

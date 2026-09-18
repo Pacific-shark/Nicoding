@@ -46,6 +46,7 @@ jobs:
           pnpm validate:journeys
           pnpm validate:story
           pnpm validate:atlas
+          pnpm validate:space
           pnpm validate:courses
           pnpm validate:bank
       - name: Configure Pages
