@@ -30,7 +30,7 @@ export default function Constellation({id,view,progress}) {
  const [mode,setMode]=useState(chapterById[id]||knowledgeById[view]?'local':'global');
  const [domain,setDomain]=useState(initial),[selected,setSelected]=useState(knowledgeById[view]?view:(initial==='ml'?'ml-splits':domainKnowledge[initial][0].id));
  const [query,setQuery]=useState(''),[list,setList]=useState(false);
- const [cameras,setCameras]=useState(()=>({...Object.fromEntries(chapters.map(c=>[c.id,defaultCamera()])),global:focusCamera(globalPoints.find(p=>p.id===selected)),[initial]:focusCamera(domainPoints[initial].find(p=>p.id===selected))}));
+ const [cameras,setCameras]=useState(()=>({...Object.fromEntries(chapters.map(c=>[c.id,defaultCamera()])),global:defaultCamera(),[initial]:knowledgeById[view]?focusCamera(domainPoints[initial].find(p=>p.id===selected)):defaultCamera()}));
  const cameraKey=mode==='global'?'global':domain,camera=cameras[cameraKey];
  const isList=list||!!query.trim(),chapter=chapterById[domain],node=knowledgeById[selected];
  const matching=useMemo(()=>knowledge.filter(k=>(mode==='global'||k.domain===domain)&&[k.title,k.subtitle,k.id].join(' ').toLowerCase().includes(query.trim().toLowerCase())),[domain,mode,query]);

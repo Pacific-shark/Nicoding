@@ -1,8 +1,8 @@
 import React,{memo,useEffect,useId,useMemo,useRef,useState} from 'react';
 import {chapterById} from './catalog.js';
 import {knowledgeById,shortTitle} from './knowledge.js';
-import {clamp,placeLabels,project,sphereArc} from './space-geometry.js';
-import {globalPoints,SPHERE_RADIUS} from './knowledge-layout.js';
+import {clamp,placeLabels,project,branchArc} from './space-geometry.js';
+import {globalPoints,FIELD_RADIUS} from './knowledge-layout.js';
 import {personality} from './knowledge-personality.js';
 import KnowledgeCat from './KnowledgeCat.jsx';
 import {useSpaceCamera} from './useSpaceCamera.js';
@@ -45,25 +45,22 @@ export default function KnowledgeSpace({mode,domain,camera:savedCamera,onCamera,
  const related=useMemo(()=>new Set([...(knowledgeById[selected]?.prereqs||[]),...world.filter(p=>knowledgeById[p.id].prereqs.includes(selected)).map(p=>p.id)]),[selected,world]);
  const edges=useMemo(()=>{
   const byId=Object.fromEntries(world.map(p=>[p.id,p]));
-  return world.flatMap(n=>knowledgeById[n.id].prereqs.filter(id=>byId[id]).map(id=>({from:id,to:n.id,sameDomain:byId[id].domain===n.domain,samples:sphereArc(byId[id],n)})));
+  return world.flatMap(n=>knowledgeById[n.id].prereqs.filter(id=>byId[id]).map(id=>({from:id,to:n.id,sameDomain:byId[id].domain===n.domain,color:chapterById[n.domain].color,samples:branchArc(byId[id],n)})));
  },[world]);
- const sphereRadius=Math.max(24,Math.min(width,height)*.385-8)*camera.zoom,scale=sphereRadius/SPHERE_RADIUS;
+ const fieldRadius=Math.max(24,Math.min(width,height)*.43-8)*camera.zoom,scale=fieldRadius/FIELD_RADIUS;
  const projected=useMemo(()=>world.map(p=>{
-  const screen=project(p,camera,width,height,scale),depth=clamp(screen.z/SPHERE_RADIUS,-1,1),proximity=(depth+1)/2;
+  const screen=project(p,camera,width,height,scale),depth=clamp(screen.z/FIELD_RADIUS,-1,1),proximity=(depth+1)/2;
   const radius=clamp((global?17:25)*Math.min(1,Math.min(width,height)/660)*(.65+.45*proximity)*Math.sqrt(camera.zoom),global?7:12,global?22:30);
-  return {...p,...screen,depth,radius,opacity:.17+.83*Math.pow(proximity,1.3),label:shortTitle(knowledgeById[p.id]),canvasWidth:width,canvasHeight:height,priority:p.id===selected?4:related.has(p.id)?3:p.domain===domain?2:0};
+  return {...p,...screen,depth,radius,opacity:.3+.7*Math.pow(proximity,1.2),label:shortTitle(knowledgeById[p.id]),canvasWidth:width,canvasHeight:height,priority:p.id===selected?4:related.has(p.id)?3:p.domain===domain?2:0};
  }).sort((a,b)=>a.z-b.z),[world,camera,width,height,scale,global,related,selected,domain]);
  const labels=useMemo(()=>placeLabels(projected,width,height,compact?10:12,selected,global?(compact?10:20):24),[projected,width,height,compact,global,selected]);
  const paths=useMemo(()=>edges.filter(e=>!global||e.sameDomain||e.from===selected||e.to===selected).map(e=>({...e,...arcPaths(e.samples,camera,width,height,scale),active:e.from===selected||e.to===selected})),[edges,global,selected,camera,width,height,scale]);
- return <div className={'knowledge-space '+(global?'is-global ':'')+(dragging?'is-dragging':'')} ref={viewport} tabIndex={0} role="group" aria-label="知识星图画布：空白处按住左键拖动，方向键也可转动视角" data-yaw={camera.yaw.toFixed(5)} data-pitch={camera.pitch.toFixed(5)} data-renderer="spherical" {...handlers}>
+ return <div className={'knowledge-space '+(global?'is-global ':'')+(dragging?'is-dragging':'')} ref={viewport} tabIndex={0} role="group" aria-label="知识星图画布：空白处按住左键拖动，方向键也可转动视角" data-orientation={camera.orientation.map(v=>v.toFixed(6)).join(',')} data-renderer="branching" {...handlers}>
   <svg width={width} height={height} viewBox={'0 0 '+width+' '+height} className={'space-svg cat-constellation '+(global?'cat-global':'cat-local')} aria-label={global?'全局三维知识星图':chapterById[domain].name+'三维知识星图'} role="group">
    <defs>
-    <radialGradient id={prefix+'-volume'} cx="36%" cy="28%" r="73%"><stop offset="0" stopColor="#fffcf5" stopOpacity=".1"/><stop offset=".66" stopColor="#e8e4d6" stopOpacity=".04"/><stop offset="1" stopColor="#bfcfcf" stopOpacity=".13"/></radialGradient>
-    <linearGradient id={prefix+'-rim'} x1="0" y1="0" x2="1" y2="1"><stop stopColor="#d3b89a" stopOpacity=".65"/><stop offset=".48" stopColor="#d7dfdc" stopOpacity=".08"/><stop offset="1" stopColor="#9dafb5" stopOpacity=".6"/></linearGradient>
     <CatSymbols prefix={prefix}/>
    </defs>
-   <circle className="sphere-volume" data-sphere-outline="" cx={width/2} cy={height/2} r={sphereRadius} fill={'url(#'+prefix+'-volume)'} stroke={'url(#'+prefix+'-rim)'} strokeWidth="1" pointerEvents="none"/>
-   <g className="cat-relations" pointerEvents="none">{paths.map(e=><g key={e.from+'-'+e.to} data-prerequisite={e.from+'-'+e.to} className={e.active?'is-linked':''}><path d={e.back} className="arc-back"/><path d={e.front} className="arc-front"/></g>)}</g>
+   <g className="cat-relations" pointerEvents="none">{paths.map(e=><g key={e.from+'-'+e.to} data-prerequisite={e.from+'-'+e.to} style={{'--branch-color':e.color}} className={e.active?'is-linked':''}><path d={e.back} className="arc-back"/><path d={e.front} className="arc-front"/></g>)}</g>
    {projected.map(n=>{
     const k=knowledgeById[n.id],active=n.id===selected,p=personality(n.id),completed=!!progress?.state?.lessons?.[n.id]?.completed;
     const color=active?'#a65333':chapterById[n.domain].color;

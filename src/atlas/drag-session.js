@@ -6,8 +6,12 @@ export function createDragSession({schedule,cancelFrame,render,commit}){
  return {
   get active(){return !!start;},
   get pointer(){return start?.pointer;},
-  begin(pointer,x,y,camera){if(disposed||start)return false;start={pointer,x,y,camera:cleanCamera(camera)};return true;},
-  move(pointer,x,y){if(disposed||!start||pointer!==start.pointer)return;pending=dragCamera(start.camera,x-start.x,y-start.y);if(frame===null)frame=schedule(()=>{frame=null;if(!disposed&&pending)render(pending);});},
+  begin(pointer,x,y,camera,gain=.006){if(disposed||start)return false;start={pointer,x,y,camera:cleanCamera(camera),gain};return true;},
+  move(pointer,x,y){
+   if(disposed||!start||pointer!==start.pointer||!Number.isFinite(x)||!Number.isFinite(y))return;
+   pending=dragCamera(pending||start.camera,x-start.x,y-start.y,start.gain);start.x=x;start.y=y;
+   if(frame===null)frame=schedule(()=>{frame=null;if(!disposed&&pending)render(pending);});
+  },
   finish(pointer){if(disposed||!start||(pointer!==undefined&&pointer!==start.pointer))return;start=null;clear();if(pending){const value=pending;pending=null;render(value);commit(value);}},
   cancel(){start=null;pending=null;clear();},
   dispose(){disposed=true;start=null;pending=null;clear();}

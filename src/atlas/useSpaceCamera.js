@@ -1,5 +1,5 @@
 import {useEffect,useRef,useState} from 'react';
-import {canRotate,cleanCamera,dragCamera} from './space-geometry.js';
+import {canRotate,cleanCamera,dragCamera,dragSensitivity} from './space-geometry.js';
 import {createDragSession} from './drag-session.js';
 
 export function useSpaceCamera(camera,onChange){
@@ -21,7 +21,8 @@ export function useSpaceCamera(camera,onChange){
  }
  return {camera:live,dragging,handlers:{
   onPointerDown:e=>{
-   if(!canRotate(e,!!e.target.closest?.('[data-space-target]'))||!session.current?.begin(e.pointerId,e.clientX,e.clientY,live))return;
+   const bounds=e.currentTarget.getBoundingClientRect();
+   if(!canRotate(e,!!e.target.closest?.('[data-space-target]'))||!session.current?.begin(e.pointerId,e.clientX,e.clientY,live,dragSensitivity(bounds.width,bounds.height)))return;
    e.preventDefault();e.currentTarget.focus({preventScroll:true});
    try{e.currentTarget.setPointerCapture(e.pointerId);}catch{session.current.cancel();return;}
    setDragging(true);

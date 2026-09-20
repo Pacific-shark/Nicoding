@@ -8,12 +8,14 @@ try{
  const {domainPoints}=await server.ssrLoadModule('/src/atlas/knowledge-layout.js');
  const {default:Cat}=await server.ssrLoadModule('/src/components/NicoCharacter.jsx');
  const {default:Recovery}=await server.ssrLoadModule('/src/components/RecoveryBoundary.jsx');
- const props={mode:'global',domain:'ml',camera:{yaw:0,pitch:0,zoom:1},onCamera:()=>{},points:domainPoints.ml,selected:'ml-splits',onSelect:()=>{},progress:{state:{lessons:{}}}};
+ const props={mode:'global',domain:'ml',camera:{orientation:[0,0,0,1],zoom:1},onCamera:()=>{},points:domainPoints.ml,selected:'ml-splits',onSelect:()=>{},progress:{state:{lessons:{}}}};
  const markup=renderToStaticMarkup(React.createElement(Space,props));
  assert.equal((markup.match(/data-space-target=/g)||[]).length,84);
  assert.equal((markup.match(/id="[^"]*-cat-\d+"/g)||[]).length,12,'share 12 glyph definitions instead of drawing 84 complete SVG trees');
  assert.equal((markup.match(/<use /g)||[]).length,84);
  assert.equal((markup.match(/<filter/g)||[]).length,0,'map does not allocate SVG filter surfaces');
+ assert(!markup.includes('data-sphere-outline'),'no spherical enclosure around the knowledge branches');
+ assert(markup.includes('data-renderer="branching"'));
  const elements=(markup.match(/<[a-z]+\b/g)||[]).length;
  assert(elements<1300,'map DOM budget exceeded: '+elements);
  assert(!/NaN|Infinity/.test(markup));

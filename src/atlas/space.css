@@ -47,9 +47,9 @@
 .cat-label-reveal{opacity:0;pointer-events:none}
 .cat-node:hover .cat-label,.cat-node:focus-visible .cat-label,.cat-node.selected .cat-label{opacity:1}
 .cat-selected-ring{fill:#fbebda;fill-opacity:.65;stroke:#bd7956;stroke-width:1.1;pointer-events:none}
-.cat-relations path{fill:none;stroke:#97aeb6;stroke-width:.8;stroke-linecap:round;stroke-linejoin:round}
-.cat-relations .arc-back{stroke-opacity:.1}
-.cat-relations .arc-front{stroke-opacity:.28}
+.cat-relations path{fill:none;stroke:var(--branch-color,#97aeb6);stroke-width:.85;stroke-linecap:round;stroke-linejoin:round}
+.cat-relations .arc-back{stroke-opacity:.16}
+.cat-relations .arc-front{stroke-opacity:.35}
 .cat-relations .is-linked path{stroke:#b97850;stroke-width:1.5}
 .cat-relations .is-linked .arc-front{stroke-opacity:.88}
 .cat-relations .is-linked .arc-back{stroke-opacity:.24;stroke-dasharray:2 5}

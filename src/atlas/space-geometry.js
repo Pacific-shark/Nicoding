@@ -1,37 +1,48 @@
-export const TAU=Math.PI*2;
-export const GLOBAL_CAMERA=Object.freeze({yaw:0,pitch:0,zoom:1});
+export const GLOBAL_CAMERA=Object.freeze({orientation:Object.freeze([0,0,0,1]),zoom:1});
 export const clamp=(v,min,max)=>Math.max(min,Math.min(max,v));
 const finite=(v,fallback)=>Number.isFinite(v)?v:fallback;
-const angle=v=>((finite(v,0)+Math.PI)%TAU+TAU)%TAU-Math.PI;
-export const cleanCamera=(camera={})=>({yaw:angle(camera.yaw),pitch:angle(camera.pitch),zoom:clamp(finite(camera.zoom,1),.7,1.25)});
-export function rotate(point,camera){
- const {yaw,pitch}=cleanCamera(camera),x=point.x*Math.cos(yaw)+point.z*Math.sin(yaw),z=-point.x*Math.sin(yaw)+point.z*Math.cos(yaw);
- return {x,y:point.y*Math.cos(pitch)-z*Math.sin(pitch),z:point.y*Math.sin(pitch)+z*Math.cos(pitch)};
+function unitQuaternion(value){
+ const q=Array.isArray(value)&&value.length===4&&value.every(Number.isFinite)?value:[0,0,0,1],length=Math.hypot(...q);
+ return Number.isFinite(length)&&length>1e-12?q.map(n=>n/length):[0,0,0,1];
 }
-// Orthographic positions keep the silhouette round. Glyph size and opacity
-// convey depth without rotating the cat or its label away from the reader.
+function multiply(a,b){
+ const [x,y,z,w]=a,[X,Y,Z,W]=b;
+ return [w*X+x*W+y*Z-z*Y,w*Y-x*Z+y*W+z*X,w*Z+x*Y-y*X+z*W,w*W-x*X-y*Y-z*Z];
+}
+export const cleanCamera=(camera={})=>({orientation:unitQuaternion(camera.orientation),zoom:clamp(finite(camera.zoom,1),.7,1.25)});
+export function rotate(point,camera){
+ const [x,y,z,w]=cleanCamera(camera).orientation;
+ const tx=2*(y*point.z-z*point.y),ty=2*(z*point.x-x*point.z),tz=2*(x*point.y-y*point.x);
+ return {x:point.x+w*tx+y*tz-z*ty,y:point.y+w*ty+z*tx-x*tz,z:point.z+w*tz+x*ty-y*tx};
+}
+// Orthographic projection keeps text readable; world coordinates carry depth.
 export function project(point,camera,width,height,scale=1){
  const p=rotate(point,camera);
  return {x:width/2+p.x*scale,y:height/2+p.y*scale,z:p.z,scale};
 }
 export function focusCamera(point,camera=GLOBAL_CAMERA){
- if(!point)return cleanCamera(camera);
- return {yaw:-Math.atan2(point.x,point.z),pitch:Math.atan2(point.y,Math.hypot(point.x,point.z)),zoom:cleanCamera(camera).zoom};
+ const clean=cleanCamera(camera);if(!point)return clean;
+ const p=rotate(point,clean),length=Math.hypot(p.x,p.y,p.z);if(length<1e-9)return clean;
+ // Shortest rotation from the current direction to the front, preserving roll.
+ const q=p.z/length<-.999999?[1,0,0,0]:unitQuaternion([p.y/length,-p.x/length,0,1+p.z/length]);
+ return {...clean,orientation:unitQuaternion(multiply(q,clean.orientation))};
 }
-export function dragCamera(camera,dx,dy){
- const clean=cleanCamera(camera);
- return cleanCamera({...clean,yaw:clean.yaw+finite(dx,0)*.006,pitch:clean.pitch-finite(dy,0)*.006});
+export function dragCamera(camera,dx,dy,gain=.006){
+ const clean=cleanCamera(camera),x=finite(dx,0),y=finite(dy,0),distance=Math.hypot(x,y);if(!distance)return clean;
+ const halfAngle=distance*gain/2,s=Math.sin(halfAngle)/distance;
+ // Pre-multiply: the axis belongs to the screen, even after a full flip.
+ return {...clean,orientation:unitQuaternion(multiply([-y*s,x*s,0,Math.cos(halfAngle)],clean.orientation))};
 }
+export const dragSensitivity=(width,height)=>clamp(2.8/Math.max(1,Math.min(width,height)),.0035,.009);
 export function canRotate({button,isPrimary},onNode){return button===0&&isPrimary!==false&&!onNode;}
-export function sphereArc(a,b,steps=20){
- const radius=Math.hypot(a.x,a.y,a.z),dot=clamp((a.x*b.x+a.y*b.y+a.z*b.z)/(radius*Math.hypot(b.x,b.y,b.z)),-1,1),theta=Math.acos(dot),sin=Math.sin(theta);
- if(theta<1e-6)return [a,b];
- const axis=Math.abs(a.y)<radius*.9?{x:-a.z,y:0,z:a.x}:{x:a.y,y:-a.x,z:0},length=Math.hypot(axis.x,axis.y,axis.z);
+export function branchArc(a,b,steps=12){
+ // A short bow through the volume, never a route along a spherical shell.
+ const distance=Math.hypot(b.x-a.x,b.y-a.y,b.z-a.z),mid={x:(a.x+b.x)/2,y:(a.y+b.y)/2,z:(a.z+b.z)/2};
+ const length=Math.hypot(mid.x,mid.y,mid.z)||1,bend=Math.min(24,distance*.12);
+ const control={x:mid.x*(1-bend/length),y:mid.y*(1-bend/length),z:mid.z*(1-bend/length)};
  return Array.from({length:steps+1},(_,i)=>{
-  const t=i/steps;
-  if(Math.abs(sin)<1e-6)return {x:a.x*Math.cos(Math.PI*t)+axis.x/length*radius*Math.sin(Math.PI*t),y:a.y*Math.cos(Math.PI*t)+axis.y/length*radius*Math.sin(Math.PI*t),z:a.z*Math.cos(Math.PI*t)+axis.z/length*radius*Math.sin(Math.PI*t)};
-  const u=Math.sin((1-t)*theta)/sin,v=Math.sin(t*theta)/sin;
-  return {x:a.x*u+b.x*v,y:a.y*u+b.y*v,z:a.z*u+b.z*v};
+  const t=i/steps,u=1-t;
+  return {x:u*u*a.x+2*u*t*control.x+t*t*b.x,y:u*u*a.y+2*u*t*control.y+t*t*b.y,z:u*u*a.z+2*u*t*control.z+t*t*b.z};
  });
 }
 export function placeLabels(nodes,width,height,fontSize=12,selected,limit=24){
